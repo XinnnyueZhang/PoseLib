@@ -1,16 +1,25 @@
+# Regular benchmark executable
 add_executable(benchmark
     benchmark.cc
     problem_generator.cc
-    benchmark_fisheye.cc
 )
 
 target_link_libraries(benchmark PRIVATE PoseLib::PoseLib Eigen3::Eigen)
 
+# Fisheye benchmark executable
+add_executable(benchmark_fisheye
+    benchmark_fisheye.cc
+    problem_generator.cc
+)
+
+target_link_libraries(benchmark_fisheye PRIVATE PoseLib::PoseLib Eigen3::Eigen)
+
 install(
-  TARGETS benchmark
+  TARGETS benchmark benchmark_fisheye
   RUNTIME DESTINATION bin
   COMPONENT "${INSTALL_BIN_DIR}"
 )
 
 # Compilation options
 set_compile_flags(benchmark)
+set_compile_flags(benchmark_fisheye)

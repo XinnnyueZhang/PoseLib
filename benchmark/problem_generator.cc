@@ -247,6 +247,15 @@ double UnknownFocalFisheyeValidator::compute_pose_error(const AbsolutePoseProble
     return (instance.pose_gt.R() - pose.R()).norm() + (instance.pose_gt.t - pose.t).norm();
 }
 
+void UnknownFocalFisheyeValidator::compute_pose_error(const AbsolutePoseProblemInstance &instance, const CameraPose &pose, 
+    double &focal, double &RError, double & tError, double &fError) {
+
+    RError = (instance.pose_gt.R() - pose.R()).norm();
+    tError = (instance.pose_gt.t - pose.t).norm() / instance.pose_gt.t.norm() * 100;
+    fError = std::abs(instance.focal_gt - focal)/std::abs(instance.focal_gt) * 100;
+
+}
+
 bool UnknownFocalFisheyeValidator::is_valid(const AbsolutePoseProblemInstance &instance, const CameraPose &pose, double focal,
                                      double tol) {
     if ((pose.R().transpose() * pose.R() - Eigen::Matrix3d::Identity()).norm() > tol)

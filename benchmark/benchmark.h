@@ -25,7 +25,7 @@ struct BenchmarkResult {
     int solutions_ = 0;
     int valid_solutions_ = 0;
     int found_gt_pose_ = 0;
-    int runtime_ns_ = 0;
+    int64_t runtime_ns_ = 0;
 };
 
 // Wrappers for the Benchmarking code
@@ -348,7 +348,7 @@ template <bool CheiralCheck = false> struct SolverHomography4pt {
 };
 
 // NEW p4pfr used for fisheye camera resectioning
-struct SolverP4PFr_Fisheye {
+struct SolverFisheye_P4PFr {
     // difference from p4pfr is that do not store distortion parameters and fisheye validator
     static inline int solve(const AbsolutePoseProblemInstance &instance, poselib::CameraPoseVector *solutions,
                             std::vector<double> *focals) {
@@ -360,10 +360,10 @@ struct SolverP4PFr_Fisheye {
         return p4pfr_normalizeInput(p2d, instance.X_point_, solutions, focals, &ks);
     }
     typedef UnknownFocalFisheyeValidator validator;
-    static std::string name() { return "p4pfr_fisheye"; }
+    static std::string name() { return "fisheye_p4pfr"; }
 };
 
-struct SolverP4PFr_Fisheye_LM {
+struct SolverFisheye_P4PFr_LM {
     static inline int solve(const AbsolutePoseProblemInstance &instance, poselib::CameraPoseVector *solutions,
                             std::vector<double> *focals) {
 
@@ -404,11 +404,11 @@ struct SolverP4PFr_Fisheye_LM {
         return nSols_LM;
     }
     typedef UnknownFocalFisheyeValidator validator;
-    static std::string name() { return "p4pfr_fisheye_LM"; }
+    static std::string name() { return "fisheye_p4pfr_LM"; }
 };
 
 // NEW HC solvers for Fisheye camera resectioning with unknown focal
-struct SolverP4PF_Fisheye {
+struct SolverFisheye_HC_pose_gtDebug {
     // polynomial with poses as unknowns (8 unknowns)
     // debuging with gt pose
     static inline int solve(const AbsolutePoseProblemInstance &instance, poselib::CameraPoseVector *solutions,
@@ -439,10 +439,10 @@ struct SolverP4PF_Fisheye {
     //     return 1;
     // }
     typedef UnknownFocalFisheyeValidator validator;
-    static std::string name() { return "p4pf_fisheye"; }
+    static std::string name() { return "fisheye_hc_pose_gtDebug"; }
 };
 
-struct SolverP4PF_Fisheye_depth_small_perturbation {
+struct SolverFisheye_HC_depth_gtDebug {
     // polynomial with depths as unknowns (5 unknowns)
     // Randomly perturb the initial pose and focal length
 
@@ -478,10 +478,10 @@ struct SolverP4PF_Fisheye_depth_small_perturbation {
         return 1;
     }
     typedef UnknownFocalFisheyeValidator validator;
-    static std::string name() { return "p4pf_fisheye_depth_small_perturbation"; }
+    static std::string name() { return "fisheye_hc_depth_gtDebug"; }
 };
 
-struct SolverP4PF_Fisheye_depth_random_initial {
+struct SolverFisheye_HC_depth_random {
     // polynomial with depths as unknowns (5 unknowns)
 
     static inline int solve(const AbsolutePoseProblemInstance &instance, poselib::CameraPoseVector *solutions,
@@ -511,10 +511,10 @@ struct SolverP4PF_Fisheye_depth_random_initial {
         return 1;
     }
     typedef UnknownFocalFisheyeValidator validator;
-    static std::string name() { return "p4pf_fisheye_depth_random_initial"; }
+    static std::string name() { return "fisheye_hc_depth_random"; }
 };
 
-struct SolverP4PF_Fisheye_depth_p4pfr_initial {
+struct SolverFisheye_HC_depth_p4pfr {
     // polynomial with depths as unknowns (5 unknowns)
 
     static inline int solve(const AbsolutePoseProblemInstance &instance, poselib::CameraPoseVector *solutions,
@@ -557,7 +557,67 @@ struct SolverP4PF_Fisheye_depth_p4pfr_initial {
         return nSols_HC;
     }
     typedef UnknownFocalFisheyeValidator validator;
-    static std::string name() { return "p4pf_fisheye_depth_p4pfr_initial"; }
+    static std::string name() { return "fisheye_hc_depth_p4pfr"; }
+};
+
+
+struct SolverFisheye_HC_depth_p4pfr_LM {
+    // polynomial with depths as unknowns (5 unknowns)
+
+    static inline int solve(const AbsolutePoseProblemInstance &instance, poselib::CameraPoseVector *solutions,
+                            std::vector<double> *focals) {
+
+        // use p4pfr to get the initial pose and focal length
+        std::vector<Eigen::Vector2d> x_fisheye(instance.x_point_fisheye_.size());
+        for (int i = 0; i < instance.x_point_fisheye_.size(); i++) {
+            x_fisheye[i] = instance.x_point_fisheye_[i].hnormalized();
+        }
+        CameraPoseVector solutions_p4pfr;
+        std::vector<double> focals_p4pfr;
+        std::vector<double> ks;
+        int nSols_p4pfr = p4pfr(x_fisheye, instance.X_point_, &solutions_p4pfr, &focals_p4pfr, &ks);
+
+        if (nSols_p4pfr == 0) {
+            return 0;
+        }
+
+        int nSols_HC = 0;
+        for (int i = 0; i < nSols_p4pfr; i++) {
+            CameraPose pose_initial = solutions_p4pfr[i];
+            Camera camera_initial;
+            camera_initial.model_id = 12;
+            camera_initial.params = {focals_p4pfr[i], 0.0, 0.0};
+            Image Img_initial(pose_initial, camera_initial);
+
+            CameraPose solution_HC;
+            double focal_HC;
+            int HC_success = p4pf_fisheye_depth(x_fisheye, instance.X_point_, Img_initial, &solution_HC, &focal_HC);
+
+            if (HC_success == 1) {
+
+                // LM refine (for numerical stability)
+                CameraPose pose_LM_initial = solution_HC;
+                Camera camera_LM_initial;
+                camera_LM_initial.model_id = 12;
+                camera_LM_initial.params = {focal_HC, 0.0, 0.0};
+                Image Img_LM_initial(pose_LM_initial, camera_LM_initial);
+
+                AbsolutePoseRefiner<> refiner(x_fisheye, instance.X_point_);
+                BundleOptions bundle_opt;
+                bundle_opt.step_tol = 1e-12;
+                lm_impl<decltype(refiner)>(refiner, &Img_LM_initial, bundle_opt);
+
+                solutions->push_back(Img_LM_initial.pose);
+                focals->push_back(Img_LM_initial.camera.params[0]);
+                nSols_HC++;
+            }
+
+        }
+
+        return nSols_HC;
+    }
+    typedef UnknownFocalFisheyeValidator validator;
+    static std::string name() { return "fisheye_hc_depth_p4pfr_LM"; }
 };
 
 
