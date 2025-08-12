@@ -1,6 +1,7 @@
 add_executable(benchmark
     benchmark.cc
     problem_generator.cc
+    benchmark_fisheye.cc
 )
 
 target_link_libraries(benchmark PRIVATE PoseLib::PoseLib Eigen3::Eigen)

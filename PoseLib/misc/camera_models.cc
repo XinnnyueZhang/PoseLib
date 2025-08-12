@@ -1209,7 +1209,72 @@ void SimpleFisheyeCameraModel::unproject(const std::vector<double> &params, cons
 void SimpleFisheyeCameraModel::project_with_jac(const std::vector<double> &params, const Eigen::Vector3d &x,
                                                 Eigen::Vector2d *xp, Eigen::Matrix<double, 2, 3> *jac,
                                                 Eigen::Matrix<double, 2, Eigen::Dynamic> *jac_params) {
-    std::cout << "To be implemented" << std::endl;
+    
+    double rho = x.topRows<2>().norm();
+
+    if (rho > 1e-8) {
+        double theta = std::atan2(rho, x(2));
+
+        double rd = theta;
+        const double inv_r = 1.0 / rho;
+
+        double drho_dx = x(0) / rho;
+        double drho_dy = x(1) / rho;
+
+        double rho_z2 = rho * rho + x(2) * x(2);
+        double dtheta_drho = x(2) / rho_z2;
+        double dtheta_dz = -rho / rho_z2;
+
+        double drd_dtheta = (1.0);
+        double drd_dx = drd_dtheta * dtheta_drho * drho_dx;
+        double drd_dy = drd_dtheta * dtheta_drho * drho_dy;
+        double drd_dz = drd_dtheta * dtheta_dz;
+
+        double dinv_r_drho = -1.0 / (rho * rho);
+        double dinv_r_dx = dinv_r_drho * drho_dx;
+        double dinv_r_dy = dinv_r_drho * drho_dy;
+
+        (*xp)(0) = params[0] * x(0) * inv_r * rd + params[1];
+        (*xp)(1) = params[0] * x(1) * inv_r * rd + params[2];
+
+        if (jac) {
+            (*jac)(0, 0) = params[0] * (inv_r * rd + x(0) * dinv_r_dx * rd + x(0) * inv_r * drd_dx);
+            (*jac)(0, 1) = params[0] * x(0) * (dinv_r_dy * rd + inv_r * drd_dy);
+            (*jac)(0, 2) = params[0] * x(0) * inv_r * drd_dz;
+            (*jac)(1, 0) = params[0] * x(1) * (dinv_r_dx * rd + inv_r * drd_dx);
+            (*jac)(1, 1) = params[0] * (inv_r * rd + x(1) * dinv_r_dy * rd + x(1) * inv_r * drd_dy);
+            (*jac)(1, 2) = params[0] * x(1) * inv_r * drd_dz;
+        }
+
+        if (jac_params) {
+            jac_params->resize(2, num_params);
+            (*jac_params)(0, 0) = x(0) * inv_r * rd;
+            (*jac_params)(1, 0) = x(1) * inv_r * rd;
+
+            (*jac_params)(0, 1) = 1.0;
+            (*jac_params)(1, 1) = 0.0;
+
+            (*jac_params)(0, 2) = 0.0;
+            (*jac_params)(1, 2) = 1.0;
+
+        }
+    } else {
+        // Very close to the principal axis - ignore distortion
+        (*xp)(0) = params[0] * x(0) + params[1];
+        (*xp)(1) = params[0] * x(1) + params[2];
+        if (jac) {
+            (*jac)(0, 0) = params[0];
+            (*jac)(0, 1) = 0.0;
+            (*jac)(0, 2) = 0.0;
+            (*jac)(1, 0) = 0.0;
+            (*jac)(1, 1) = params[0];
+            (*jac)(1, 2) = 0.0;
+        }
+        if (jac_params) {
+            jac_params->resize(2, num_params);
+            jac_params->setZero();
+        }
+    }
 }
 
 
