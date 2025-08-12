@@ -410,6 +410,7 @@ struct SolverP4PFr_Fisheye_LM {
 // NEW HC solvers for Fisheye camera resectioning with unknown focal
 struct SolverP4PF_Fisheye {
     // polynomial with poses as unknowns (8 unknowns)
+    // debuging with gt pose
     static inline int solve(const AbsolutePoseProblemInstance &instance, poselib::CameraPoseVector *solutions,
                             std::vector<double> *focals) {
 
