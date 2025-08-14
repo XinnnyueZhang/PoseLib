@@ -1,5 +1,4 @@
 #include "PoseLib/solvers/p4pf_fisheye.h"
-#include <iostream>
 
 namespace poselib {
 
@@ -18,9 +17,9 @@ namespace poselib {
 
         if (stats.success) {
             problem.get_solution(HC_output, solution, focal);
-            return 0;
-        } else {
             return 1;
+        } else {
+            return 0;
         }
 
     }

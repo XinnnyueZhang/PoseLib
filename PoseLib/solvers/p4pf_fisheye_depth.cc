@@ -12,6 +12,7 @@ namespace poselib {
         typedef AbsoluteFisheyeHCProblemDepth::sol_t sol_t;
         typedef AbsoluteFisheyeHCProblemDepth::poly_t poly_t;
         typedef AbsoluteFisheyeHCProblemDepth::jacobian_t jacobian_t;
+        
         HCStats stats = HC_impl<AbsoluteFisheyeHCProblemDepth, sol_t, poly_t, jacobian_t>(problem, opt, HC_output);
 
         if (stats.success) {

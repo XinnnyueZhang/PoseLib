@@ -266,9 +266,6 @@ class AbsoluteFisheyeHCProblemDepth : public HCProblemBase<5, 5, Image> {
                 Eigen::Vector2d xp;
                 SimpleFisheyeCameraModel::project(camera.params, Z, &xp);
                 this->x_simulated.push_back(xp);
-
-                // std::cout << "x_simulated[" << i << "]: " << xp << std::endl;
-                // std::cout << "x[" << i << "]: " << x[i] << std::endl;
             }
             
         }
