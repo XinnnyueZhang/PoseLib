@@ -89,10 +89,11 @@ class AbsoluteFisheyeHCProblem : public HCProblemBase<8, 8, Image> {
             for (int i = 0; i < X.size()-1; ++i) {
                 double rd = std::sqrt(x_[i][0]*x_[i][0] + x_[i][1]*x_[i][1]);
                 double theta = rd / f;
-                polys(i*2) = (r3.dot(X[i]) + t(2))*std::tan(theta)*x_[i][0] - r1.dot(X[i]) - t(0);
-                polys(i*2+1) = (r3.dot(X[i]) + t(2))*std::tan(theta)*x_[i][1] - r2.dot(X[i]) - t(1);
+                polys(i*2) = -(r3.dot(X[i]) + t(2))*std::tan(theta)*x_[i][0]/rd + r1.dot(X[i]) + t(0);
+                polys(i*2+1) = -(r3.dot(X[i]) + t(2))*std::tan(theta)*x_[i][1]/rd + r2.dot(X[i]) + t(1);
             }
-            polys(6) = x_[3][0] * (r2.dot(X[3]) + t(1)) - x_[3][1] * (r1.dot(X[3]) + t(0));
+            double rd_3 = std::sqrt(x_[3][0]*x_[3][0] + x_[3][1]*x_[3][1]);
+            polys(6) = x_[3][0] / rd_3 * (r2.dot(X[3]) + t(1)) - x_[3][1] / rd_3 * (r1.dot(X[3]) + t(0));
             polys(7) = q[0]*q[0] + q[1]*q[1] + q[2]*q[2] + q[3]*q[3] - 1;
 
         }

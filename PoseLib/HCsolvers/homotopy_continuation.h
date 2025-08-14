@@ -25,7 +25,14 @@ bool compute_dx(double t, Problem &problem, Solution &sol, Solution &dx) {
     Jacobian Jx = t * JF + (1 - t) * JG;
     Poly t_grad = polysF - polysG;
 
-    dx = -(Jx.transpose() * Jx).inverse() * Jx.transpose() * t_grad;
+    if (Jx.rows() == Jx.cols()) {
+        // Use LU decomposition - fastest for square matrices
+        dx = -Jx.lu().solve(t_grad);    
+    } else {
+        // Use QR decomposition for non-square matrices
+        dx = -Jx.transpose() * (Jx * Jx.transpose()).colPivHouseholderQr().solve(t_grad);
+    }
+    // dx = -(Jx.transpose() * Jx).inverse() * Jx.transpose() * t_grad;
 
     return true;
 }

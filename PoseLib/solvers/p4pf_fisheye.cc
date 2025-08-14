@@ -16,8 +16,6 @@ namespace poselib {
 
         HCStats stats = HC_impl<AbsoluteFisheyeHCProblem, sol_t, poly_t, jacobian_t>(problem, opt, HC_output);
 
-        std::cout << "\n what is the HC stats? " << stats.success << std::endl;
-
         if (stats.success) {
             problem.get_solution(HC_output, solution, focal);
             return 0;
