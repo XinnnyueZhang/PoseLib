@@ -722,7 +722,7 @@ struct SolverFisheye_HC_depth_p4pfr_LM {
 };
 
 
-// NEW using p4pf as initial
+// NEW using p3.5pf as initial
 struct SolverFisheye_P35PF {
     // difference from p4pfr is that do not store distortion parameters and fisheye validator
     static inline int solve(const AbsolutePoseProblemInstance &instance, poselib::CameraPoseVector *solutions,
@@ -869,6 +869,200 @@ struct SolverFisheye_HC_depth_p35pf {
     }
     typedef UnknownFocalFisheyeValidator validator;
     static std::string name() { return "fisheye_hc_depth_p35pf"; }
+};
+
+
+// NEW using p4pf as initial
+struct SolverFisheye_P4PF {
+    // difference from p4pfr is that do not store distortion parameters and fisheye validator
+    static inline int solve(const AbsolutePoseProblemInstance &instance, poselib::CameraPoseVector *solutions,
+                            std::vector<double> *focals) {
+        std::vector<Eigen::Vector2d> p2d(4);
+        for (int i = 0; i < 4; ++i) {
+            p2d[i] = instance.x_point_fisheye_[i].hnormalized();
+        }
+        
+        return p4pf(p2d, instance.X_point_, solutions, focals, true);
+    }
+    typedef UnknownFocalFisheyeValidator validator;
+    static std::string name() { return "fisheye_p4pf"; }
+};
+
+// struct SolverFisheye_P4PF_LMf {
+//     static inline int solve(const AbsolutePoseProblemInstance &instance, poselib::CameraPoseVector *solutions,
+//                             std::vector<double> *focals) {
+
+//         // normalize input
+//         std::vector<Eigen::Vector2d> p2d(4);
+//         for (int i = 0; i < 4; ++i) {
+//             p2d[i] = instance.x_point_fisheye_[i].hnormalized();
+//         }
+
+//         CameraPoseVector solutions_p4pf;
+//         std::vector<double> focals_p4pf;
+//         int nSols_p4pf = p4pf(p2d, instance.X_point_, &solutions_p4pf, &focals_p4pf, true);
+
+//         if (nSols_p4pf == 0) {
+//             return 0;
+//         }
+
+//         // LM refine
+//         int nSols_LM = 0;
+//         for (int i = 0; i < nSols_p4pf; i++) {
+//             CameraPose pose_initial = solutions_p4pf[i];
+//             Camera camera_initial;
+//             camera_initial.model_id = 12;
+//             camera_initial.params = {focals_p4pf[i], 0.0, 0.0};
+//             Image Img_initial(pose_initial, camera_initial);
+
+//             AbsolutePoseRefiner<> refiner(p2d, instance.X_point_);
+
+//             BundleOptions bundle_opt;
+//             bundle_opt.step_tol = 1e-12;
+//             lm_impl<decltype(refiner)>(refiner, &Img_initial, bundle_opt);
+
+//             solutions->push_back(Img_initial.pose);
+//             focals->push_back(Img_initial.camera.params[0]);
+//             nSols_LM++;
+//         }
+//         return nSols_LM;
+//     }
+//     typedef UnknownFocalFisheyeValidator validator;
+//     static std::string name() { return "fisheye_p4pf_LM"; }
+// };
+
+
+struct SolverFisheye_P4PF_LM {
+    static inline int solve(const AbsolutePoseProblemInstance &instance, poselib::CameraPoseVector *solutions,
+                            std::vector<double> *focals) {
+
+        // normalize input
+        std::vector<Eigen::Vector2d> p2d(4);
+        for (int i = 0; i < 4; ++i) {
+            p2d[i] = instance.x_point_fisheye_[i].hnormalized();
+        }
+
+        CameraPoseVector solutions_p4pf;
+        std::vector<double> focals_p4pf;
+        int nSols_p4pf = p4pf(p2d, instance.X_point_, &solutions_p4pf, &focals_p4pf, true);
+
+        if (nSols_p4pf == 0) {
+            return 0;
+        }
+
+        // LM refine
+        int nSols_LM = 0;
+        for (int i = 0; i < nSols_p4pf; i++) {
+            CameraPose pose_initial = solutions_p4pf[i];
+            Camera camera_initial;
+            camera_initial.model_id = 12;
+            camera_initial.params = {focals_p4pf[i], 0.0, 0.0};
+            Image Img_initial(pose_initial, camera_initial);
+
+            AbsolutePoseRefiner<> refiner(p2d, instance.X_point_);
+
+            BundleOptions bundle_opt;
+            bundle_opt.step_tol = 1e-12;
+            lm_impl<decltype(refiner)>(refiner, &Img_initial, bundle_opt);
+
+            solutions->push_back(Img_initial.pose);
+            focals->push_back(Img_initial.camera.params[0]);
+            nSols_LM++;
+        }
+        return nSols_LM;
+    }
+    typedef UnknownFocalFisheyeValidator validator;
+    static std::string name() { return "fisheye_p4pf_LM"; }
+};
+
+
+struct SolverFisheye_HC_pose_p4pf {
+    // polynomial with poses as unknowns (8 unknowns)
+    static inline int solve(const AbsolutePoseProblemInstance &instance, poselib::CameraPoseVector *solutions,
+                            std::vector<double> *focals) {
+
+        // use p4pfr to get the initial pose and focal length
+        std::vector<Eigen::Vector2d> x_fisheye(instance.x_point_fisheye_.size());
+        for (int i = 0; i < instance.x_point_fisheye_.size(); i++) {
+            x_fisheye[i] = instance.x_point_fisheye_[i].hnormalized();
+        }
+        CameraPoseVector solutions_p4pf;
+        std::vector<double> focals_p4pf;
+        int nSols_p4pf = p4pf(x_fisheye, instance.X_point_, &solutions_p4pf, &focals_p4pf, true);
+
+        if (nSols_p4pf == 0) {
+            return 0;
+        }
+
+        int nSols_HC = 0;
+        for (int i = 0; i < nSols_p4pf; i++) {
+            CameraPose pose_initial = solutions_p4pf[i];
+            Camera camera_initial;
+            camera_initial.model_id = 12;
+            camera_initial.params = {focals_p4pf[i], 0.0, 0.0};
+            Image Img_initial(pose_initial, camera_initial);
+
+            CameraPose solution_HC;
+            double focal_HC;
+            int HC_success = p4pf_fisheye(x_fisheye, instance.X_point_, Img_initial, &solution_HC, &focal_HC);
+
+            if (HC_success == 1) {
+                solutions->push_back(solution_HC);
+                focals->push_back(focal_HC);
+                nSols_HC++;
+            }
+
+        }
+
+        return nSols_HC;
+    }
+    typedef UnknownFocalFisheyeValidator validator;
+    static std::string name() { return "fisheye_hc_pose_p4pf"; }
+};
+
+
+struct SolverFisheye_HC_depth_p4pf {
+    // polynomial with depths as unknowns (5 unknowns)
+    static inline int solve(const AbsolutePoseProblemInstance &instance, poselib::CameraPoseVector *solutions,
+                            std::vector<double> *focals) {
+
+        // use p4pfr to get the initial pose and focal length
+        std::vector<Eigen::Vector2d> x_fisheye(instance.x_point_fisheye_.size());
+        for (int i = 0; i < instance.x_point_fisheye_.size(); i++) {
+            x_fisheye[i] = instance.x_point_fisheye_[i].hnormalized();
+        }
+        CameraPoseVector solutions_p4pf;
+        std::vector<double> focals_p4pf;
+        int nSols_p4pf = p4pf(x_fisheye, instance.X_point_, &solutions_p4pf, &focals_p4pf, true);
+
+        if (nSols_p4pf == 0) {
+            return 0;
+        }
+
+        int nSols_HC = 0;
+        for (int i = 0; i < nSols_p4pf; i++) {
+            CameraPose pose_initial = solutions_p4pf[i];
+            Camera camera_initial;
+            camera_initial.model_id = 12;
+            camera_initial.params = {focals_p4pf[i], 0.0, 0.0};
+            Image Img_initial(pose_initial, camera_initial);
+
+            CameraPose solution_HC;
+            double focal_HC;
+            int HC_success = p4pf_fisheye_depth(x_fisheye, instance.X_point_, Img_initial, &solution_HC, &focal_HC);
+
+            if (HC_success == 1) {
+                solutions->push_back(solution_HC);
+                focals->push_back(focal_HC);
+                nSols_HC++;
+            }
+
+        }
+
+        return nSols_HC;
+    }
+    typedef UnknownFocalFisheyeValidator validator;
+    static std::string name() { return "fisheye_hc_depth_p4pf"; }
 };
 
 
