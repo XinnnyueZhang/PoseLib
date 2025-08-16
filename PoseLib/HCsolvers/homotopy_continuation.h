@@ -30,7 +30,7 @@ bool compute_dx(double t, Problem &problem, Solution &sol, Solution &dx) {
         dx = -Jx.lu().solve(t_grad);    
     } else {
         // Use QR decomposition for non-square matrices
-        dx = -Jx.transpose() * (Jx * Jx.transpose()).colPivHouseholderQr().solve(t_grad);
+        dx = -Jx.colPivHouseholderQr().solve(t_grad);
     }
     // dx = -(Jx.transpose() * Jx).inverse() * Jx.transpose() * t_grad;
 
@@ -125,23 +125,19 @@ HCStats HC_impl(Problem &problem, const HCOptions &opt, Solution &sol)
 
 			if (opt.adaptive_flag) {
 				Solution sol_temp = sol;
-				sol = sol_temp - (JH.transpose() * JH).inverse() * JH.transpose() * Hpolys;
+				// sol = sol_temp - (JH.transpose() * JH).inverse() * JH.transpose() * Hpolys;
 
-                // if (JH.rows() == JH.cols()) {
-                //     sol = sol_temp - (JH.transpose() * JH).lu().solve(Hpolys);
-                // } else {
-                //     sol = sol_temp - (JH.transpose() * JH).colPivHouseholderQr().solve(Hpolys);
-                // }
+                if (JH.rows() == JH.cols()) {
+                    sol = sol_temp - JH.lu().solve(Hpolys);
+                } else {
+                    // if tall JH is matrix
+                    sol = sol_temp - JH.colPivHouseholderQr().solve(Hpolys);
+                }
                 
 				if ( (sol - sol_temp).norm() < 1e-6) {
 					break;
 				}
 			} else {
-                // if (JH.rows() == JH.cols()) {
-                //     sol = sol - (JH.transpose() * JH).lu().solve(Hpolys);
-                // } else {
-                //     sol = sol - (JH.transpose() * JH).colPivHouseholderQr().solve(Hpolys);
-                // }
 				sol = sol - (JH.transpose() * JH).inverse() * JH.transpose() * Hpolys;
 			}
 		}

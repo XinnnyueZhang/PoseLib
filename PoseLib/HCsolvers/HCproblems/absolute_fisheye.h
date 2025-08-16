@@ -197,7 +197,7 @@ class AbsoluteFisheyeHCProblemPose : public HCProblemBase<7, 7, Image> {
 
         Image pose_initial;
 
-        AbsoluteFisheyeHCProblem(const std::vector<Point2D> &points2D, const std::vector<Point3D> &points3D,
+        AbsoluteFisheyeHCProblemPose(const std::vector<Point2D> &points2D, const std::vector<Point3D> &points3D,
                                  const Image &_pose_initial)
             : HCProblemBase<7, 7, Image>(), pose_initial(_pose_initial) {
 
@@ -331,7 +331,6 @@ class AbsoluteFisheyeHCProblemPose : public HCProblemBase<7, 7, Image> {
 
 
         }
-
 
 
 };

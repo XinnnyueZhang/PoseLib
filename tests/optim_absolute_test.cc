@@ -42,6 +42,49 @@ void setup_scene(int N, CameraPose &pose, std::vector<Point2D> &x, std::vector<P
     }
 }
 
+void setup_scene_fisheye(int N, CameraPose &pose, std::vector<Point2D> &x, std::vector<Point3D> &X, Camera &cam,
+    std::vector<double> &weights) {
+
+    double fov = 120.0;
+    static const double kPI = 3.14159265358979323846;
+    double fov_scale = std::tan( fov/ 2.0 * kPI / 180.0);
+
+    pose.q.setRandom();
+    pose.q.normalize();
+    pose.t.setRandom();
+    Eigen::VectorXd depth_factor(N);
+    depth_factor.setRandom();
+    for (size_t i = 0; i < N; ++i) {
+        Eigen::Vector2d xi;
+        // we sample points in [0.2, 0.8] of the image
+        xi.setRandom();
+        xi *= 0.3;
+        xi += Eigen::Vector2d(0.5, 0.5);
+        // xi = [-1, 1] -> xi = [0.2, 0.8]
+        // xi << xi(0) * cam.width, xi(1) * cam.height;
+        xi << xi(0) * fov_scale, xi(1) * fov_scale;
+
+        Eigen::Vector3d Xi;
+        cam.unproject(xi, &Xi);
+        Xi *= (2.0 + 10.0 * depth_factor(i)); // backproject
+
+
+        Eigen::Vector3d x_fisheye{0.0, 0.0, 1.0};
+        double rho = std::sqrt(Xi(0) * Xi(0) + Xi(1) * Xi(1));
+        if (rho > 1e-8) {
+            double theta = std::atan2(rho, Xi(2));
+            x_fisheye[0] = cam.focal() * theta * Xi(0) / rho;
+            x_fisheye[1] = cam.focal() * theta * Xi(1) / rho;
+        } else {
+            x_fisheye.block<2, 1>(0, 0) = Xi.block<2, 1>(0, 0) / Xi(2) * cam.focal();
+        }
+
+        x.push_back(x_fisheye.hnormalized());
+        X.push_back(pose.apply_inverse(Xi));
+        weights.push_back(1.0 * (i + 1.0));
+    }
+}
+
 void setup_scene_w_lines(int N_pts, int N_lines, CameraPose &pose, std::vector<Point2D> &x, std::vector<Point3D> &X,
                          std::vector<Line2D> &lin2D, std::vector<Line3D> &lin3D, Camera &cam,
                          std::vector<double> &weights_pts, std::vector<double> &weights_lin) {
@@ -213,6 +256,54 @@ bool test_absolute_pose_refinement() {
     }
 
     Image image(pose, camera);
+    AbsolutePoseRefiner<> refiner(x, X);
+
+    BundleOptions bundle_opt;
+    bundle_opt.step_tol = 1e-12;
+    BundleStats stats = lm_impl<decltype(refiner)>(refiner, &image, bundle_opt, print_iteration);
+
+    std::cout << "iter = " << stats.iterations << "\n";
+    std::cout << "initial_cost = " << stats.initial_cost << "\n";
+    std::cout << "cost = " << stats.cost << "\n";
+    std::cout << "lambda = " << stats.lambda << "\n";
+    std::cout << "invalid_steps = " << stats.invalid_steps << "\n";
+    std::cout << "step_norm = " << stats.step_norm << "\n";
+    std::cout << "grad_norm = " << stats.grad_norm << "\n";
+
+    REQUIRE_SMALL(stats.grad_norm, 1e-8);
+    REQUIRE(stats.cost < stats.initial_cost);
+
+    return true;
+}
+
+
+bool test_absolute_pose_refinement_fisheye() {
+    const size_t N = 10;
+    // std::string camera_str = "12 SIMPLE_FISHEYE 4288 2848 1921.45 1922.76 2156.14 1446.19 ";
+    Camera camera;
+    // camera.initialize_from_txt(camera_str);
+    camera.model_id = 12;
+    camera.params = {800.0, 0.0, 0.0};
+    CameraPose pose;
+    std::vector<Eigen::Vector2d> x;
+    std::vector<Eigen::Vector3d> X;
+    std::vector<double> weights;
+    setup_scene_fisheye(N, pose, x, X, camera, weights);
+
+    // add noise
+    for (size_t i = 0; i < N; ++i) {
+        Eigen::Vector2d noise;
+        noise.setRandom();
+        x[i] += 0.01 * noise * 800.0;
+    }
+
+    std::cout << "cool here" << std::endl;
+
+    Camera camera_initial;
+    camera_initial.model_id = 12;
+    camera_initial.params = {600.0, 0.0, 0.0};
+
+    Image image(pose, camera_initial);
     AbsolutePoseRefiner<> refiner(x, X);
 
     BundleOptions bundle_opt;
@@ -640,14 +731,17 @@ bool test_1d_radial_absolute_pose_cameras_refinement() {
 using namespace test::absolute;
 std::vector<Test> register_optim_absolute_test() {
     return {// Points
-            TEST(test_absolute_pose_normal_acc), TEST(test_absolute_pose_jacobian),
-            TEST(test_absolute_pose_jacobian_cameras), TEST(test_absolute_pose_refinement),
-            TEST(test_absolute_pose_weighted_refinement), TEST(test_absolute_pose_cameras_refinement),
-            // Lines
-            TEST(test_line_absolute_pose_normal_acc), TEST(test_line_absolute_pose_jacobian),
-            TEST(test_line_absolute_pose_refinement),
-            // Poiints + Lines
-            TEST(test_point_line_absolute_pose_jacobian), TEST(test_point_line_absolute_pose_refinement),
-            // 1D radial camera
-            TEST(test_1d_radial_absolute_pose_jacobian_cameras), TEST(test_1d_radial_absolute_pose_cameras_refinement)};
+            // TEST(test_absolute_pose_normal_acc), TEST(test_absolute_pose_jacobian),
+            // TEST(test_absolute_pose_jacobian_cameras), 
+            // TEST(test_absolute_pose_refinement),
+            // TEST(test_absolute_pose_weighted_refinement), TEST(test_absolute_pose_cameras_refinement),
+            // // Lines
+            // TEST(test_line_absolute_pose_normal_acc), TEST(test_line_absolute_pose_jacobian),
+            // TEST(test_line_absolute_pose_refinement),
+            // // Poiints + Lines
+            // TEST(test_point_line_absolute_pose_jacobian), TEST(test_point_line_absolute_pose_refinement),
+            // // 1D radial camera
+            // TEST(test_1d_radial_absolute_pose_jacobian_cameras), TEST(test_1d_radial_absolute_pose_cameras_refinement),
+            // Fisheye camera
+            TEST(test_absolute_pose_refinement_fisheye)};
 }

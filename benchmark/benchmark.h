@@ -369,7 +369,7 @@ struct SolverFisheye_P4PFr_LM {
     static inline int solve(const AbsolutePoseProblemInstance &instance, poselib::CameraPoseVector *solutions,
                             std::vector<double> *focals) {
 
-        // normalize input
+        // dehomogenize input
         std::vector<Eigen::Vector2d> p2d(4);
         for (int i = 0; i < 4; ++i) {
             p2d[i] = instance.x_point_fisheye_[i].hnormalized();
@@ -393,10 +393,12 @@ struct SolverFisheye_P4PFr_LM {
             camera_initial.params = {focals_p4pfr[i], 0.0, 0.0};
             Image Img_initial(pose_initial, camera_initial);
 
-            AbsolutePoseRefiner<> refiner(p2d, instance.X_point_);
-
             BundleOptions bundle_opt;
             bundle_opt.step_tol = 1e-12;
+            bundle_opt.refine_focal_length = true;
+            std::vector<size_t> camera_refine_idx = Img_initial.camera.get_param_refinement_idx(bundle_opt);
+
+            AbsolutePoseRefiner<> refiner(p2d, instance.X_point_, camera_refine_idx);
             lm_impl<decltype(refiner)>(refiner, &Img_initial, bundle_opt);
 
             solutions->push_back(Img_initial.pose);
@@ -431,10 +433,12 @@ struct SolverFisheye_random_LM {
         
 
         // LM refine
-        AbsolutePoseRefiner<> refiner(x_fisheye, instance.X_point_);
-
         BundleOptions bundle_opt;
         bundle_opt.step_tol = 1e-12;
+        bundle_opt.refine_focal_length = true;
+        std::vector<size_t> camera_refine_idx = Img_initial.camera.get_param_refinement_idx(bundle_opt);
+
+        AbsolutePoseRefiner<> refiner(x_fisheye, instance.X_point_, camera_refine_idx);
         lm_impl<decltype(refiner)>(refiner, &Img_initial, bundle_opt);
 
         solutions->push_back(Img_initial.pose);
@@ -703,9 +707,12 @@ struct SolverFisheye_HC_depth_p4pfr_LM {
                 camera_LM_initial.params = {focal_HC, 0.0, 0.0};
                 Image Img_LM_initial(pose_LM_initial, camera_LM_initial);
 
-                AbsolutePoseRefiner<> refiner(x_fisheye, instance.X_point_);
                 BundleOptions bundle_opt;
                 bundle_opt.step_tol = 1e-12;
+                bundle_opt.refine_focal_length = true;
+                std::vector<size_t> camera_refine_idx = Img_LM_initial.camera.get_param_refinement_idx(bundle_opt);
+    
+                AbsolutePoseRefiner<> refiner(x_fisheye, instance.X_point_, camera_refine_idx);
                 lm_impl<decltype(refiner)>(refiner, &Img_LM_initial, bundle_opt);
 
                 solutions->push_back(Img_LM_initial.pose);
@@ -765,10 +772,12 @@ struct SolverFisheye_P35PF_LM {
             camera_initial.params = {focals_p35pf[i], 0.0, 0.0};
             Image Img_initial(pose_initial, camera_initial);
 
-            AbsolutePoseRefiner<> refiner(p2d, instance.X_point_);
-
             BundleOptions bundle_opt;
             bundle_opt.step_tol = 1e-12;
+            bundle_opt.refine_focal_length = true;
+            std::vector<size_t> camera_refine_idx = Img_initial.camera.get_param_refinement_idx(bundle_opt);
+
+            AbsolutePoseRefiner<> refiner(p2d, instance.X_point_, camera_refine_idx);
             lm_impl<decltype(refiner)>(refiner, &Img_initial, bundle_opt);
 
             solutions->push_back(Img_initial.pose);
@@ -959,10 +968,12 @@ struct SolverFisheye_P4PF_LM {
             camera_initial.params = {focals_p4pf[i], 0.0, 0.0};
             Image Img_initial(pose_initial, camera_initial);
 
-            AbsolutePoseRefiner<> refiner(p2d, instance.X_point_);
-
             BundleOptions bundle_opt;
             bundle_opt.step_tol = 1e-12;
+            bundle_opt.refine_focal_length = true;
+            std::vector<size_t> camera_refine_idx = Img_initial.camera.get_param_refinement_idx(bundle_opt);
+
+            AbsolutePoseRefiner<> refiner(p2d, instance.X_point_, camera_refine_idx);
             lm_impl<decltype(refiner)>(refiner, &Img_initial, bundle_opt);
 
             solutions->push_back(Img_initial.pose);
@@ -1063,6 +1074,148 @@ struct SolverFisheye_HC_depth_p4pf {
     }
     typedef UnknownFocalFisheyeValidator validator;
     static std::string name() { return "fisheye_hc_depth_p4pf"; }
+};
+
+
+// sampling + p3p
+// no refiner
+struct SolverFisheye_P3P {
+    static inline int solve(const AbsolutePoseProblemInstance &instance, poselib::CameraPoseVector *solutions,
+        std::vector<double> *focals) {
+
+        int nSols = 0;
+
+        // std::vector<double> fov_list = {30, 40, 50, 60, 70, 80, 90, 100, 110, 120};
+        std::vector<double> focal_list = {100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
+        for (double focal : focal_list) {
+            Camera camera;
+            camera.model_id = 12;
+            camera.params = {focal, 0.0, 0.0};
+            Image Img(instance.pose_gt, camera);
+
+            std::vector<Eigen::Vector3d> x_fisheye_normalized(instance.x_point_fisheye_.size());
+            for (int i = 0; i < instance.x_point_fisheye_.size(); i++) {
+                camera.unproject(instance.x_point_fisheye_[i].hnormalized(), &x_fisheye_normalized[i]);
+            }
+
+            CameraPoseVector solutions_p3p;
+            int nSols_p3p = p3p_ding(x_fisheye_normalized, instance.X_point_, &solutions_p3p);
+
+            for (int j = 0; j < nSols_p3p; j++) {
+                solutions->push_back(solutions_p3p[j]);
+                focals->push_back(focal);
+                nSols++;
+            }
+        }
+
+        return nSols;
+    }
+    typedef UnknownFocalFisheyeValidator validator;
+    static std::string name() { return "fisheye_p3p_sampling"; }
+};
+
+
+// LM refiner
+struct SolverFisheye_P3P_LM {
+    static inline int solve(const AbsolutePoseProblemInstance &instance, poselib::CameraPoseVector *solutions,
+        std::vector<double> *focals) {
+
+        // dehomogenize input
+        std::vector<Eigen::Vector2d> p2d(instance.x_point_fisheye_.size());
+        for (int i = 0; i < instance.x_point_fisheye_.size(); ++i) {
+            p2d[i] = instance.x_point_fisheye_[i].hnormalized();
+        }
+
+        int nSols = 0;
+
+        std::vector<double> reprojection_errors;
+
+        // std::vector<double> fov_list = {30, 40, 50, 60, 70, 80, 90, 100, 110, 120};
+        std::vector<double> focal_list = {100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
+        for (double focal : focal_list) {
+            Camera camera;
+            camera.model_id = 12;
+            camera.params = {focal, 0.0, 0.0};
+            Image Img(instance.pose_gt, camera);
+
+            std::vector<Eigen::Vector3d> x_fisheye_normalized(instance.x_point_fisheye_.size());
+            for (int i = 0; i < instance.x_point_fisheye_.size(); i++) {
+                camera.unproject(p2d[i], &x_fisheye_normalized[i]);
+            }
+
+            CameraPoseVector solutions_p3p;
+            int nSols_p3p = p3p_ding(x_fisheye_normalized, instance.X_point_, &solutions_p3p);
+
+            for (int j = 0; j < nSols_p3p; j++) {
+                // reprojection_errors.push_back(compute_reprojection_error(solutions_p3p[j], instance.X_point_, p2d));
+                solutions->push_back(solutions_p3p[j]);
+                focals->push_back(focal);
+                nSols++;
+            }
+        }
+
+
+
+        return nSols;
+    }
+    typedef UnknownFocalFisheyeValidator validator;
+    static std::string name() { return "fisheye_p3p_sampling_LM"; }
+};
+
+
+struct SolverFisheye_P3P_LM_all {
+    static inline int solve(const AbsolutePoseProblemInstance &instance, poselib::CameraPoseVector *solutions,
+        std::vector<double> *focals) {
+
+        // dehomogenize input
+        std::vector<Eigen::Vector2d> p2d(instance.x_point_fisheye_.size());
+        for (int i = 0; i < instance.x_point_fisheye_.size(); ++i) {
+            p2d[i] = instance.x_point_fisheye_[i].hnormalized();
+        }
+
+        int nSols = 0;
+
+        // std::vector<double> fov_list = {30, 40, 50, 60, 70, 80, 90, 100, 110, 120};
+        std::vector<double> focal_list = {100, 200, 300, 400, 500, 600, 700, 800, 900, 1000};
+        for (double focal : focal_list) {
+            Camera camera;
+            camera.model_id = 12;
+            camera.params = {focal, 0.0, 0.0};
+            Image Img(instance.pose_gt, camera);
+
+            std::vector<Eigen::Vector3d> x_fisheye_normalized(instance.x_point_fisheye_.size());
+            for (int i = 0; i < instance.x_point_fisheye_.size(); i++) {
+                camera.unproject(p2d[i], &x_fisheye_normalized[i]);
+            }
+
+            CameraPoseVector solutions_p3p;
+            int nSols_p3p = p3p(x_fisheye_normalized, instance.X_point_, &solutions_p3p);
+
+            for (int j = 0; j < nSols_p3p; j++) {
+                CameraPose pose_initial = solutions_p3p[j];
+                Camera camera_initial;
+                camera_initial.model_id = 12;
+                camera_initial.params = {focal, 0.0, 0.0};
+                Image Img_initial(pose_initial, camera_initial);
+    
+                BundleOptions bundle_opt;
+                bundle_opt.step_tol = 1e-12;
+                bundle_opt.refine_focal_length = true;
+                std::vector<size_t> camera_refine_idx = Img_initial.camera.get_param_refinement_idx(bundle_opt);
+    
+                AbsolutePoseRefiner<> refiner(p2d, instance.X_point_, camera_refine_idx);
+                lm_impl<decltype(refiner)>(refiner, &Img_initial, bundle_opt);
+    
+                solutions->push_back(Img_initial.pose);
+                focals->push_back(focal);
+                nSols++;
+            }
+        }
+
+        return nSols;
+    }
+    typedef UnknownFocalFisheyeValidator validator;
+    static std::string name() { return "fisheye_p3p_sampling_LM_all"; }
 };
 
 

@@ -209,7 +209,8 @@ SETUP_CAMERA_SHARED_DEFS(SimpleFisheyeCameraModel, "SIMPLE_FISHEYE", 12);
     SWITCH_CAMERA_MODEL_CASE(Radial1DCameraModel)                                                                      \
     SWITCH_CAMERA_MODEL_CASE(SphericalCameraModel)                                                                     \
     SWITCH_CAMERA_MODEL_CASE(DivisionCameraModel)                                                                      \
-    SWITCH_CAMERA_MODEL_CASE(SimpleDivisionCameraModel);
+    SWITCH_CAMERA_MODEL_CASE(SimpleDivisionCameraModel)                                                                \
+    SWITCH_CAMERA_MODEL_CASE(SimpleFisheyeCameraModel);
 
 #define SWITCH_CAMERA_MODELS_DEFAULT_UNPROJECT_WITH_JAC                                                                \
     SWITCH_CAMERA_MODEL_CASE(NullCameraModel)                                                                          \

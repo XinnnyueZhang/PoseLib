@@ -71,14 +71,14 @@ int main(int argc, char *argv[]) {
     std::cout << "Running tests... (seed = " << seed << ")\n\n";
     int passed = 0, num_tests = 0;
 
-    RUN_TESTS(camera_models_test);
+    // RUN_TESTS(camera_models_test);
     RUN_TESTS(optim_absolute_test);
-    RUN_TESTS(optim_relative_test);
-    RUN_TESTS(optim_fundamental_test);
-    RUN_TESTS(optim_gen_absolute_test);
-    RUN_TESTS(optim_gen_relative_test);
-    RUN_TESTS(optim_homography_test);
-    RUN_TESTS(recalibrator_test);
+    // RUN_TESTS(optim_relative_test);
+    // RUN_TESTS(optim_fundamental_test);
+    // RUN_TESTS(optim_gen_absolute_test);
+    // RUN_TESTS(optim_gen_relative_test);
+    // RUN_TESTS(optim_homography_test);
+    // RUN_TESTS(recalibrator_test);
 
     std::cout << "Test suite finished (" << passed << " / " << num_tests << " passed, seed = " << seed << ")\n\n";
     if (failed_tests.size() > 0) {

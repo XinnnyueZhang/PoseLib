@@ -1282,6 +1282,7 @@ const size_t SimpleFisheyeCameraModel::num_params = 3;
 const std::string SimpleFisheyeCameraModel::params_info() { return "f, cx, cy"; };
 const std::vector<size_t> SimpleFisheyeCameraModel::focal_idx = {0};
 const std::vector<size_t> SimpleFisheyeCameraModel::principal_point_idx = {1, 2};
+const std::vector<size_t> SimpleFisheyeCameraModel::extra_idx = {};
 
 
 ///////////////////////////////////////////////////////////////////

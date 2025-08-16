@@ -426,6 +426,7 @@ void generate_abspose_problems(int n_problems, std::vector<AbsolutePoseProblemIn
             instance.x_point_fisheye_.push_back(x_fisheye);
             instance.X_point_.push_back(X);
             instance.p_point_.push_back(p);
+
         }
 
         // This generates instances where the same 3D point is observed twice in a generalized camera
