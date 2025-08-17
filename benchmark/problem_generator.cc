@@ -264,16 +264,16 @@ bool UnknownFocalFisheyeValidator::is_valid(const AbsolutePoseProblemInstance &i
     if (focal < 0)
         return false;
 
-    // // lambda*[tan(theta) x/rd; 1] = R*X + t
-    // for (int i = 0; i < instance.x_point_fisheye_.size(); ++i) {
-    //     double rd = std::sqrt(instance.x_point_fisheye_[i](0) * instance.x_point_fisheye_[i](0) + instance.x_point_fisheye_[i](1) * instance.x_point_fisheye_[i](1));
-    //     double theta = rd / focal;
-    //     Eigen::Vector3d x_fisheye = Eigen::Vector3d{instance.x_point_fisheye_[i](0) / rd * std::tan(theta), instance.x_point_fisheye_[i](1) / rd * std::tan(theta), 1.0};
-    //     double err = 1.0 - std::abs((x_fisheye).normalized()
-    //                                     .dot((pose.R() * instance.X_point_[i] + pose.t).normalized()));
-    //     if (err > tol)
-    //         return false;
-    // }
+    // lambda*[tan(theta) x/rd; 1] = R*X + t
+    for (int i = 0; i < instance.x_point_fisheye_.size(); ++i) {
+        double rd = std::sqrt(instance.x_point_fisheye_[i](0) * instance.x_point_fisheye_[i](0) + instance.x_point_fisheye_[i](1) * instance.x_point_fisheye_[i](1));
+        double theta = rd / focal;
+        Eigen::Vector3d x_fisheye = Eigen::Vector3d{instance.x_point_fisheye_[i](0) / rd * std::tan(theta), instance.x_point_fisheye_[i](1) / rd * std::tan(theta), 1.0};
+        double err = 1.0 - std::abs((x_fisheye).normalized()
+                                        .dot((pose.R() * instance.X_point_[i] + pose.t).normalized()));
+        if (err > tol)
+            return false;
+    }
 
     return true;
 }

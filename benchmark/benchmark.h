@@ -394,7 +394,7 @@ struct SolverFisheye_P4PFr_LM {
             Image Img_initial(pose_initial, camera_initial);
 
             BundleOptions bundle_opt;
-            bundle_opt.step_tol = 1e-12;
+            // bundle_opt.step_tol = 1e-12;
             bundle_opt.refine_focal_length = true;
             std::vector<size_t> camera_refine_idx = Img_initial.camera.get_param_refinement_idx(bundle_opt);
 
@@ -434,7 +434,7 @@ struct SolverFisheye_random_LM {
 
         // LM refine
         BundleOptions bundle_opt;
-        bundle_opt.step_tol = 1e-12;
+        // bundle_opt.step_tol = 1e-12;
         bundle_opt.refine_focal_length = true;
         std::vector<size_t> camera_refine_idx = Img_initial.camera.get_param_refinement_idx(bundle_opt);
 
@@ -708,7 +708,7 @@ struct SolverFisheye_HC_depth_p4pfr_LM {
                 Image Img_LM_initial(pose_LM_initial, camera_LM_initial);
 
                 BundleOptions bundle_opt;
-                bundle_opt.step_tol = 1e-12;
+                // bundle_opt.step_tol = 1e-12;
                 bundle_opt.refine_focal_length = true;
                 std::vector<size_t> camera_refine_idx = Img_LM_initial.camera.get_param_refinement_idx(bundle_opt);
     
@@ -773,7 +773,7 @@ struct SolverFisheye_P35PF_LM {
             Image Img_initial(pose_initial, camera_initial);
 
             BundleOptions bundle_opt;
-            bundle_opt.step_tol = 1e-12;
+            // bundle_opt.step_tol = 1e-12;
             bundle_opt.refine_focal_length = true;
             std::vector<size_t> camera_refine_idx = Img_initial.camera.get_param_refinement_idx(bundle_opt);
 
@@ -969,7 +969,7 @@ struct SolverFisheye_P4PF_LM {
             Image Img_initial(pose_initial, camera_initial);
 
             BundleOptions bundle_opt;
-            bundle_opt.step_tol = 1e-12;
+            // bundle_opt.step_tol = 1e-12;
             bundle_opt.refine_focal_length = true;
             std::vector<size_t> camera_refine_idx = Img_initial.camera.get_param_refinement_idx(bundle_opt);
 
@@ -1199,7 +1199,7 @@ struct SolverFisheye_P3P_LM_all {
                 Image Img_initial(pose_initial, camera_initial);
     
                 BundleOptions bundle_opt;
-                bundle_opt.step_tol = 1e-12;
+                // bundle_opt.step_tol = 1e-12;
                 bundle_opt.refine_focal_length = true;
                 std::vector<size_t> camera_refine_idx = Img_initial.camera.get_param_refinement_idx(bundle_opt);
     

@@ -48,7 +48,7 @@ HCStats HC_impl(Problem &problem, const HCOptions &opt, Solution &sol)
 	
     sol = problem.get_sol_vector();
 
-	for (stats.iterations = 0; stats.iterations < opt.max_iterations+1; ++stats.iterations)
+	for (stats.iterations = 0; stats.iterations < opt.max_iterations; ++stats.iterations)
 	{   
 		// Prediction(Kutta Runge or Euler's method)
 		// t = i * step_size;
@@ -104,6 +104,10 @@ HCStats HC_impl(Problem &problem, const HCOptions &opt, Solution &sol)
 
         t += opt.step_size;
 
+        if (opt.debug_output) {
+            std::cout << "t: " << t << std::endl;
+        }
+
 
 		// Correction(Newton method)
 		for (int iter = 0; iter < opt.newton_iter; ++iter)
@@ -134,7 +138,7 @@ HCStats HC_impl(Problem &problem, const HCOptions &opt, Solution &sol)
                     sol = sol_temp - JH.colPivHouseholderQr().solve(Hpolys);
                 }
                 
-				if ( (sol - sol_temp).norm() < 1e-6) {
+				if ( (sol - sol_temp).norm() < 1e-8) {
 					break;
 				}
 			} else {
