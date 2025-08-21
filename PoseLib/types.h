@@ -90,8 +90,8 @@ struct BundleStats {
 
 // New: add HCOptions
 struct HCOptions {
-    double step_size = 0.02;
-    // double step_size = 0.05;
+    // double step_size = 0.02;
+    double step_size = 0.05;
     size_t max_iterations = 1.0/step_size;
     size_t newton_iter = 10;
     bool forth_predictor = true;

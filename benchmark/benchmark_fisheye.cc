@@ -174,15 +174,6 @@ BenchmarkResult benchmark_w_extra_save_result(int n_problems, const ProblemOptio
             file << RError << " " << tError << " " << fError << " ";
 
             pose_error = std::min(pose_error, Solver::validator::compute_pose_error(instance, solutions[k], extra[k]));
-
-            // if (RError < 1e-2) {
-            //     std::cout << "R gt: " << instance.pose_gt.R() << std::endl;
-            //     std::cout << "R sol: " << solutions[k].R() << std::endl;
-            //     std::cout << "t gt: " << instance.pose_gt.t << std::endl;
-            //     std::cout << "t sol: " << solutions[k].t << std::endl;
-            //     std::cout << "f gt: " << instance.focal_gt << std::endl;
-            //     std::cout << "f sol: " << extra[k] << std::endl;
-            // }
             
         }
 
@@ -239,7 +230,7 @@ void display_result(const std::vector<poselib::BenchmarkResult> &results) {
 
     int w = 13;
     // display header
-    std::cout << std::setw(6 * w) << "Solver";
+    std::cout << std::setw(3 * w) << "Solver";
     std::cout << std::setw(w) << "Solutions";
     std::cout << std::setw(w) << "Valid";
     std::cout << std::setw(w) << "GT found";

@@ -387,23 +387,29 @@ struct SolverFisheye_P4PFr_LM {
         // LM refine
         int nSols_LM = 0;
         for (int i = 0; i < nSols_p4pfr; i++) {
-            CameraPose pose_initial = solutions_p4pfr[i];
-            Camera camera_initial;
-            camera_initial.model_id = 12;
-            camera_initial.params = {focals_p4pfr[i], 0.0, 0.0};
-            Image Img_initial(pose_initial, camera_initial);
+            if (UnknownFocalFisheyeValidator::is_valid(instance, solutions_p4pfr[i], focals_p4pfr[i], 1e-2)){
 
-            BundleOptions bundle_opt;
-            // bundle_opt.step_tol = 1e-12;
-            bundle_opt.refine_focal_length = true;
-            std::vector<size_t> camera_refine_idx = Img_initial.camera.get_param_refinement_idx(bundle_opt);
+                CameraPose pose_initial = solutions_p4pfr[i];
+                Camera camera_initial;
+                camera_initial.model_id = 12;
+                camera_initial.params = {focals_p4pfr[i], 0.0, 0.0};
+                Image Img_initial(pose_initial, camera_initial);
 
-            AbsolutePoseRefiner<> refiner(p2d, instance.X_point_, camera_refine_idx);
-            lm_impl<decltype(refiner)>(refiner, &Img_initial, bundle_opt);
+                BundleOptions bundle_opt;
+                // bundle_opt.step_tol = 1e-12;
+                bundle_opt.refine_focal_length = true;
+                std::vector<size_t> camera_refine_idx = Img_initial.camera.get_param_refinement_idx(bundle_opt);
 
-            solutions->push_back(Img_initial.pose);
-            focals->push_back(Img_initial.camera.params[0]);
-            nSols_LM++;
+                AbsolutePoseRefiner<> refiner(p2d, instance.X_point_, camera_refine_idx);
+                lm_impl<decltype(refiner)>(refiner, &Img_initial, bundle_opt);
+
+                solutions->push_back(Img_initial.pose);
+                focals->push_back(Img_initial.camera.params[0]);
+                nSols_LM++;
+            }
+            else {
+                continue;
+            }
         }
         return nSols_LM;
     }
@@ -523,20 +529,26 @@ struct SolverFisheye_HC_pose_p4pfr {
 
         int nSols_HC = 0;
         for (int i = 0; i < nSols_p4pfr; i++) {
-            CameraPose pose_initial = solutions_p4pfr[i];
-            Camera camera_initial;
-            camera_initial.model_id = 12;
-            camera_initial.params = {focals_p4pfr[i], 0.0, 0.0};
-            Image Img_initial(pose_initial, camera_initial);
+            if (UnknownFocalFisheyeValidator::is_valid(instance, solutions_p4pfr[i], focals_p4pfr[i], 1e-2)){
 
-            CameraPose solution_HC;
-            double focal_HC;
-            int HC_success = p4pf_fisheye(x_fisheye, instance.X_point_, Img_initial, &solution_HC, &focal_HC);
+                CameraPose pose_initial = solutions_p4pfr[i];
+                Camera camera_initial;
+                camera_initial.model_id = 12;
+                camera_initial.params = {focals_p4pfr[i], 0.0, 0.0};
+                Image Img_initial(pose_initial, camera_initial);
 
-            if (HC_success == 1) {
-                solutions->push_back(solution_HC);
-                focals->push_back(focal_HC);
-                nSols_HC++;
+                CameraPose solution_HC;
+                double focal_HC;
+                int HC_success = p4pf_fisheye(x_fisheye, instance.X_point_, Img_initial, &solution_HC, &focal_HC);
+
+                if (HC_success == 1) {
+                    solutions->push_back(solution_HC);
+                    focals->push_back(focal_HC);
+                    nSols_HC++;
+                }
+            }
+            else {
+                continue;
             }
 
         }
@@ -641,20 +653,26 @@ struct SolverFisheye_HC_depth_p4pfr {
 
         int nSols_HC = 0;
         for (int i = 0; i < nSols_p4pfr; i++) {
-            CameraPose pose_initial = solutions_p4pfr[i];
-            Camera camera_initial;
-            camera_initial.model_id = 12;
-            camera_initial.params = {focals_p4pfr[i], 0.0, 0.0};
-            Image Img_initial(pose_initial, camera_initial);
+            if (UnknownFocalFisheyeValidator::is_valid(instance, solutions_p4pfr[i], focals_p4pfr[i], 1e-2)){
 
-            CameraPose solution_HC;
-            double focal_HC;
-            int HC_success = p4pf_fisheye_depth(x_fisheye, instance.X_point_, Img_initial, &solution_HC, &focal_HC);
+                CameraPose pose_initial = solutions_p4pfr[i];
+                Camera camera_initial;
+                camera_initial.model_id = 12;
+                camera_initial.params = {focals_p4pfr[i], 0.0, 0.0};
+                Image Img_initial(pose_initial, camera_initial);
 
-            if (HC_success == 1) {
-                solutions->push_back(solution_HC);
-                focals->push_back(focal_HC);
-                nSols_HC++;
+                CameraPose solution_HC;
+                double focal_HC;
+                int HC_success = p4pf_fisheye_depth(x_fisheye, instance.X_point_, Img_initial, &solution_HC, &focal_HC);
+
+                if (HC_success == 1) {
+                    solutions->push_back(solution_HC);
+                    focals->push_back(focal_HC);
+                    nSols_HC++;
+                }
+            }
+            else {
+                continue;
             }
 
         }
@@ -766,23 +784,29 @@ struct SolverFisheye_P35PF_LM {
         // LM refine
         int nSols_LM = 0;
         for (int i = 0; i < nSols_p35pf; i++) {
-            CameraPose pose_initial = solutions_p35pf[i];
-            Camera camera_initial;
-            camera_initial.model_id = 12;
-            camera_initial.params = {focals_p35pf[i], 0.0, 0.0};
-            Image Img_initial(pose_initial, camera_initial);
+            if (UnknownFocalFisheyeValidator::is_valid(instance, solutions_p35pf[i], focals_p35pf[i], 1e-2)){
 
-            BundleOptions bundle_opt;
-            // bundle_opt.step_tol = 1e-12;
-            bundle_opt.refine_focal_length = true;
-            std::vector<size_t> camera_refine_idx = Img_initial.camera.get_param_refinement_idx(bundle_opt);
+                CameraPose pose_initial = solutions_p35pf[i];
+                Camera camera_initial;
+                camera_initial.model_id = 12;
+                camera_initial.params = {focals_p35pf[i], 0.0, 0.0};
+                Image Img_initial(pose_initial, camera_initial);
 
-            AbsolutePoseRefiner<> refiner(p2d, instance.X_point_, camera_refine_idx);
-            lm_impl<decltype(refiner)>(refiner, &Img_initial, bundle_opt);
+                BundleOptions bundle_opt;
+                // bundle_opt.step_tol = 1e-12;
+                bundle_opt.refine_focal_length = true;
+                std::vector<size_t> camera_refine_idx = Img_initial.camera.get_param_refinement_idx(bundle_opt);
 
-            solutions->push_back(Img_initial.pose);
-            focals->push_back(Img_initial.camera.params[0]);
-            nSols_LM++;
+                AbsolutePoseRefiner<> refiner(p2d, instance.X_point_, camera_refine_idx);
+                lm_impl<decltype(refiner)>(refiner, &Img_initial, bundle_opt);
+
+                solutions->push_back(Img_initial.pose);
+                    focals->push_back(Img_initial.camera.params[0]);
+                    nSols_LM++;
+            }
+            else {
+                continue;
+            }
         }
         return nSols_LM;
     }
@@ -811,20 +835,26 @@ struct SolverFisheye_HC_pose_p35pf {
 
         int nSols_HC = 0;
         for (int i = 0; i < nSols_p35pf; i++) {
-            CameraPose pose_initial = solutions_p35pf[i];
-            Camera camera_initial;
-            camera_initial.model_id = 12;
-            camera_initial.params = {focals_p35pf[i], 0.0, 0.0};
-            Image Img_initial(pose_initial, camera_initial);
+            if (UnknownFocalFisheyeValidator::is_valid(instance, solutions_p35pf[i], focals_p35pf[i], 1e-2)){
 
-            CameraPose solution_HC;
-            double focal_HC;
-            int HC_success = p4pf_fisheye(x_fisheye, instance.X_point_, Img_initial, &solution_HC, &focal_HC);
+                CameraPose pose_initial = solutions_p35pf[i];
+                Camera camera_initial;
+                camera_initial.model_id = 12;
+                camera_initial.params = {focals_p35pf[i], 0.0, 0.0};
+                Image Img_initial(pose_initial, camera_initial);
 
-            if (HC_success == 1) {
-                solutions->push_back(solution_HC);
-                focals->push_back(focal_HC);
-                nSols_HC++;
+                CameraPose solution_HC;
+                double focal_HC;
+                int HC_success = p4pf_fisheye(x_fisheye, instance.X_point_, Img_initial, &solution_HC, &focal_HC);
+
+                if (HC_success == 1) {
+                    solutions->push_back(solution_HC);
+                    focals->push_back(focal_HC);
+                    nSols_HC++;
+                }
+            }
+            else {
+                continue;
             }
 
         }
@@ -856,20 +886,26 @@ struct SolverFisheye_HC_depth_p35pf {
 
         int nSols_HC = 0;
         for (int i = 0; i < nSols_p35pf; i++) {
-            CameraPose pose_initial = solutions_p35pf[i];
-            Camera camera_initial;
-            camera_initial.model_id = 12;
-            camera_initial.params = {focals_p35pf[i], 0.0, 0.0};
-            Image Img_initial(pose_initial, camera_initial);
+            if (UnknownFocalFisheyeValidator::is_valid(instance, solutions_p35pf[i], focals_p35pf[i], 1e-2)){
 
-            CameraPose solution_HC;
-            double focal_HC;
-            int HC_success = p4pf_fisheye_depth(x_fisheye, instance.X_point_, Img_initial, &solution_HC, &focal_HC);
+                CameraPose pose_initial = solutions_p35pf[i];
+                Camera camera_initial;
+                camera_initial.model_id = 12;
+                camera_initial.params = {focals_p35pf[i], 0.0, 0.0};
+                Image Img_initial(pose_initial, camera_initial);
 
-            if (HC_success == 1) {
-                solutions->push_back(solution_HC);
-                focals->push_back(focal_HC);
-                nSols_HC++;
+                CameraPose solution_HC;
+                double focal_HC;
+                int HC_success = p4pf_fisheye_depth(x_fisheye, instance.X_point_, Img_initial, &solution_HC, &focal_HC);
+
+                if (HC_success == 1) {
+                    solutions->push_back(solution_HC);
+                    focals->push_back(focal_HC);
+                    nSols_HC++;
+                }
+            }
+            else {
+                continue;
             }
 
         }

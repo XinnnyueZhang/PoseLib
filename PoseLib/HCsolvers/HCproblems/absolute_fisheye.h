@@ -180,160 +180,160 @@ class AbsoluteFisheyeHCProblem : public HCProblemBase<8, 8, Image> {
 };
 
 
-class AbsoluteFisheyeHCProblemPose : public HCProblemBase<7, 7, Image> {
-    // TODO: this class should include what I used for define functions for specific problems, 
-    // especially for the constraints evaluation and its jacobian and simulator
-    // camera model is SimpleFisheyeCameraModel
-    // Rotation is formulated with Lie algebra representation
-    // btw not polynomials cuz triangular function involved
+// class AbsoluteFisheyeHCProblemPose : public HCProblemBase2<7, 7, Image> {
+//     // TODO: this class should include what I used for define functions for specific problems, 
+//     // especially for the constraints evaluation and its jacobian and simulator
+//     // camera model is SimpleFisheyeCameraModel
+//     // Rotation is formulated with Lie algebra representation
+//     // btw not polynomials cuz triangular function involved
 
-    public:
+//     public:
 
-        // For pose as unknowns it is 2 * 3 + 1 constraints with 3 + 3 + 1 parameters
-        // static constexpr int num_params = 7;
-        // static constexpr int num_polys = 7;
-        int nParams = 7;
-        int nPolys = 7;
+//         // For pose as unknowns it is 2 * 3 + 1 constraints with 3 + 3 + 1 parameters
+//         // static constexpr int num_params = 7;
+//         // static constexpr int num_polys = 7;
+//         int nParams = 7;
+//         int nPolys = 7;
 
-        Image pose_initial;
+//         Image pose_initial;
 
-        AbsoluteFisheyeHCProblemPose(const std::vector<Point2D> &points2D, const std::vector<Point3D> &points3D,
-                                 const Image &_pose_initial)
-            : HCProblemBase<7, 7, Image>(), pose_initial(_pose_initial) {
+//         AbsoluteFisheyeHCProblemPose(const std::vector<Point2D> &points2D, const std::vector<Point3D> &points3D,
+//                                  const Image &_pose_initial)
+//             : HCProblemBase<7, 7, Image>(), pose_initial(_pose_initial) {
 
-            // Initialize base class member variables
-            this->x = points2D;
-            this->X = points3D;
+//             // Initialize base class member variables
+//             this->x = points2D;
+//             this->X = points3D;
             
-            // initialize the x_simulated
-            simulator(pose_initial);
+//             // initialize the x_simulated
+//             simulator(pose_initial);
             
-        }
+//         }
 
-        sol_t get_sol_vector() {
-            // Assume fx = fy
-            const CameraPose pose = pose_initial.pose;
-            const Camera camera = pose_initial.camera;
-            sol_t sol;
-            sol << pose.q, pose.t, camera.params[0]; // size 4+3+1 = 8
-            return sol;
-        }
+//         Image get_sol() {
+//             // Assume fx = fy
+//             const CameraPose pose = pose_initial.pose;
+//             const Camera camera = pose_initial.camera;
+//             sol_t sol;
+//             sol << pose.q, pose.t, camera.params[0]; // size 4+3+1 = 8
+//             return sol;
+//         }
 
-        void get_solution(const sol_t &sol, CameraPose *pose, double *focal) {
-            const Eigen::Vector4d q = sol.head(4);
-            const Eigen::Vector3d t = sol.block<3, 1>(4, 0);
-            const double f = sol(7);
-            *pose = CameraPose(q, t);
-            *focal = f;
-        }
+//         void get_solution(const sol_t &sol, CameraPose *pose, double *focal) {
+//             const Eigen::Vector4d q = sol.head(4);
+//             const Eigen::Vector3d t = sol.block<3, 1>(4, 0);
+//             const double f = sol(7);
+//             *pose = CameraPose(q, t);
+//             *focal = f;
+//         }
 
-        void simulator(const Image &pose_initial) {
-            const CameraPose pose = pose_initial.pose;
-            const Camera camera = pose_initial.camera;
-            const Eigen::Matrix3d R = pose.R();
-            const Eigen::Vector3d t = pose.t;
+//         void simulator(const Image &pose_initial) {
+//             const CameraPose pose = pose_initial.pose;
+//             const Camera camera = pose_initial.camera;
+//             const Eigen::Matrix3d R = pose.R();
+//             const Eigen::Vector3d t = pose.t;
 
-            // project the 3D points to the image plane (fisheye equidistant)
-            for (int i = 0; i < X.size(); ++i) {
-                const Eigen::Vector3d Z = R * X[i] + t;
-                Eigen::Vector2d xp;
-                SimpleFisheyeCameraModel::project(camera.params, Z, &xp);
-                this->x_simulated.push_back(xp);
-            }
+//             // project the 3D points to the image plane (fisheye equidistant)
+//             for (int i = 0; i < X.size(); ++i) {
+//                 const Eigen::Vector3d Z = R * X[i] + t;
+//                 Eigen::Vector2d xp;
+//                 SimpleFisheyeCameraModel::project(camera.params, Z, &xp);
+//                 this->x_simulated.push_back(xp);
+//             }
             
-        }
+//         }
 
-        void compute_polys(const sol_t &sol, const std::vector<Point2D> &x_, poly_t &polys) { 
-            // input is the solution vector
+//         void compute_polys(const sol_t &sol, const std::vector<Point2D> &x_, poly_t &polys) { 
+//             // input is the solution vector
             
-            Eigen::Vector4d q = sol.head(4);
-            const Eigen::Vector3d t = sol.block<3, 1>(4, 0);
-            const double f = sol(7);
-            const Eigen::Matrix3d R = getRfromq(q);
-            const Eigen::Vector3d r1 = R.row(0);
-            const Eigen::Vector3d r2 = R.row(1);
-            const Eigen::Vector3d r3 = R.row(2);
+//             Eigen::Vector4d q = sol.head(4);
+//             const Eigen::Vector3d t = sol.block<3, 1>(4, 0);
+//             const double f = sol(7);
+//             const Eigen::Matrix3d R = getRfromq(q);
+//             const Eigen::Vector3d r1 = R.row(0);
+//             const Eigen::Vector3d r2 = R.row(1);
+//             const Eigen::Vector3d r3 = R.row(2);
 
-            polys.setZero();
+//             polys.setZero();
             
-            for (int i = 0; i < X.size()-1; ++i) {
-                double rd = std::sqrt(x_[i][0]*x_[i][0] + x_[i][1]*x_[i][1]);
-                double theta = rd / f;
-                polys(i*2) = -(r3.dot(X[i]) + t(2))*std::tan(theta)*x_[i][0]/rd + r1.dot(X[i]) + t(0);
-                polys(i*2+1) = -(r3.dot(X[i]) + t(2))*std::tan(theta)*x_[i][1]/rd + r2.dot(X[i]) + t(1);
-            }
-            double rd_3 = std::sqrt(x_[3][0]*x_[3][0] + x_[3][1]*x_[3][1]);
-            polys(6) = x_[3][0] / rd_3 * (r2.dot(X[3]) + t(1)) - x_[3][1] / rd_3 * (r1.dot(X[3]) + t(0));
+//             for (int i = 0; i < X.size()-1; ++i) {
+//                 double rd = std::sqrt(x_[i][0]*x_[i][0] + x_[i][1]*x_[i][1]);
+//                 double theta = rd / f;
+//                 polys(i*2) = -(r3.dot(X[i]) + t(2))*std::tan(theta)*x_[i][0]/rd + r1.dot(X[i]) + t(0);
+//                 polys(i*2+1) = -(r3.dot(X[i]) + t(2))*std::tan(theta)*x_[i][1]/rd + r2.dot(X[i]) + t(1);
+//             }
+//             double rd_3 = std::sqrt(x_[3][0]*x_[3][0] + x_[3][1]*x_[3][1]);
+//             polys(6) = x_[3][0] / rd_3 * (r2.dot(X[3]) + t(1)) - x_[3][1] / rd_3 * (r1.dot(X[3]) + t(0));
 
-        }
+//         }
 
-        void compute_jacobian(const sol_t &sol, const std::vector<Point2D> &x_, jacobian_t &jacobian) {
+//         void compute_jacobian(const sol_t &sol, const std::vector<Point2D> &x_, jacobian_t &jacobian) {
 
-            Eigen::Vector4d q = sol.head(4);
-            const Eigen::Vector3d t = sol.block<3, 1>(4, 0);
-            const double f = sol(7);
-            const Eigen::Matrix3d R = getRfromq(q);
-            const Eigen::Vector3d r1 = R.row(0);
-            const Eigen::Vector3d r2 = R.row(1);
-            const Eigen::Vector3d r3 = R.row(2);
+//             Eigen::Vector4d q = sol.head(4);
+//             const Eigen::Vector3d t = sol.block<3, 1>(4, 0);
+//             const double f = sol(7);
+//             const Eigen::Matrix3d R = getRfromq(q);
+//             const Eigen::Vector3d r1 = R.row(0);
+//             const Eigen::Vector3d r2 = R.row(1);
+//             const Eigen::Vector3d r3 = R.row(2);
 
-            jacobian.setZero();
+//             jacobian.setZero();
 
-            for (int i = 0; i < X.size()-1; ++i) {
-                double rd = std::sqrt(x_[i][0]*x_[i][0] + x_[i][1]*x_[i][1]);
-                double ui = x_[i][0] / rd;
-                double vi = x_[i][1] / rd;
-                double theta = rd / f;
+//             for (int i = 0; i < X.size()-1; ++i) {
+//                 double rd = std::sqrt(x_[i][0]*x_[i][0] + x_[i][1]*x_[i][1]);
+//                 double ui = x_[i][0] / rd;
+//                 double vi = x_[i][1] / rd;
+//                 double theta = rd / f;
 
-                // g1 Jacobian wrt wx wy wz
-                jacobian(i*2, 0) = r1[2] * X[i][1] - r1[1] * X[i][2] - ui * std::tan(theta) * (r3[2] * X[i][1] - r3[1] * X[i][2]);
-                jacobian(i*2, 1) = -r1[2] * X[i][0] + r1[0] * X[i][2] -  ui * std::tan(theta) * (-r3[2] * X[i][0] + r3[0] * X[i][2]);
-                jacobian(i*2, 2) = r1[1] * X[i][0] - r1[0] * X[i][1] - ui * std::tan(theta) * (r3[1] * X[i][0] - r3[0] * X[i][1]);
+//                 // g1 Jacobian wrt wx wy wz
+//                 jacobian(i*2, 0) = r1[2] * X[i][1] - r1[1] * X[i][2] - ui * std::tan(theta) * (r3[2] * X[i][1] - r3[1] * X[i][2]);
+//                 jacobian(i*2, 1) = -r1[2] * X[i][0] + r1[0] * X[i][2] -  ui * std::tan(theta) * (-r3[2] * X[i][0] + r3[0] * X[i][2]);
+//                 jacobian(i*2, 2) = r1[1] * X[i][0] - r1[0] * X[i][1] - ui * std::tan(theta) * (r3[1] * X[i][0] - r3[0] * X[i][1]);
 
-                // g1 Jacobian wrt tx ty tz
-                jacobian(i*2, 3) = 1;
-                jacobian(i*2, 4) = 0;
-                jacobian(i*2, 5) = -ui*std::tan(theta);
+//                 // g1 Jacobian wrt tx ty tz
+//                 jacobian(i*2, 3) = 1;
+//                 jacobian(i*2, 4) = 0;
+//                 jacobian(i*2, 5) = -ui*std::tan(theta);
 
-                // g1 Jacobian wrt f
-                jacobian(i*2, 6) = ui*(r3.dot(X[i]) + t(2)) * (sec(theta) * sec(theta) * theta/f);
+//                 // g1 Jacobian wrt f
+//                 jacobian(i*2, 6) = ui*(r3.dot(X[i]) + t(2)) * (sec(theta) * sec(theta) * theta/f);
 
-                // g2 Jacobian wrt wx wy wz
-                jacobian(i*2+1, 0) = r2[2] * X[i][1] - r2[1] * X[i][2] - vi * std::tan(theta) * (r3[2] * X[i][1] - r3[1] * X[i][2]);
-                jacobian(i*2+1, 1) = -r2[2] * X[i][0] + r2[0] * X[i][2] - vi * std::tan(theta) * (-r3[2] * X[i][0] + r3[0] * X[i][2]);
-                jacobian(i*2+1, 2) = r2[1] * X[i][0] - r2[0] * X[i][1] - vi * std::tan(theta) * (r3[1] * X[i][0] - r3[0] * X[i][1]);
+//                 // g2 Jacobian wrt wx wy wz
+//                 jacobian(i*2+1, 0) = r2[2] * X[i][1] - r2[1] * X[i][2] - vi * std::tan(theta) * (r3[2] * X[i][1] - r3[1] * X[i][2]);
+//                 jacobian(i*2+1, 1) = -r2[2] * X[i][0] + r2[0] * X[i][2] - vi * std::tan(theta) * (-r3[2] * X[i][0] + r3[0] * X[i][2]);
+//                 jacobian(i*2+1, 2) = r2[1] * X[i][0] - r2[0] * X[i][1] - vi * std::tan(theta) * (r3[1] * X[i][0] - r3[0] * X[i][1]);
 
-                // g2 Jacobian wrt tx ty tz
-                jacobian(i*2+1, 3) = 0;
-                jacobian(i*2+1, 4) = 1;
-                jacobian(i*2+1, 5) = -vi*std::tan(theta);
+//                 // g2 Jacobian wrt tx ty tz
+//                 jacobian(i*2+1, 3) = 0;
+//                 jacobian(i*2+1, 4) = 1;
+//                 jacobian(i*2+1, 5) = -vi*std::tan(theta);
 
-                // g2 Jacobian wrt f
-                jacobian(i*2+1, 6) = vi*(r3.dot(X[i]) + t(2)) * (sec(theta) * sec(theta) * theta/f);
-            }
+//                 // g2 Jacobian wrt f
+//                 jacobian(i*2+1, 6) = vi*(r3.dot(X[i]) + t(2)) * (sec(theta) * sec(theta) * theta/f);
+//             }
 
-            // g3 Jacobian wrt wx wy wz
-            double rd = std::sqrt(x_[3][0]*x_[3][0] + x_[3][1]*x_[3][1]);
-            double ui = x_[3][0] / rd;
-            double vi = x_[3][1] / rd;
+//             // g3 Jacobian wrt wx wy wz
+//             double rd = std::sqrt(x_[3][0]*x_[3][0] + x_[3][1]*x_[3][1]);
+//             double ui = x_[3][0] / rd;
+//             double vi = x_[3][1] / rd;
 
-            jacobian(6, 0) = ui *(r2[2] * X[3][1] - r2[1] * X[3][2]) - vi * (r1[2] * X[3][1] - r1[1] * X[3][2]);
-            jacobian(6, 1) = -ui * (r2[2] * X[3][0] - r2[0] * X[3][2]) + vi * (r1[2] * X[3][0] - r1[0] * X[3][2]);
-            jacobian(6, 2) = ui * (r2[1] * X[3][0] - r2[0] * X[3][1]) - vi * (r1[1] * X[3][0] - r1[0] * X[3][1]);
+//             jacobian(6, 0) = ui *(r2[2] * X[3][1] - r2[1] * X[3][2]) - vi * (r1[2] * X[3][1] - r1[1] * X[3][2]);
+//             jacobian(6, 1) = -ui * (r2[2] * X[3][0] - r2[0] * X[3][2]) + vi * (r1[2] * X[3][0] - r1[0] * X[3][2]);
+//             jacobian(6, 2) = ui * (r2[1] * X[3][0] - r2[0] * X[3][1]) - vi * (r1[1] * X[3][0] - r1[0] * X[3][1]);
 
-            // g3 Jacobian wrt tx ty tz
-            jacobian(6, 3) = -vi;
-            jacobian(6, 4) = ui;
-            jacobian(6, 5) = 0;
+//             // g3 Jacobian wrt tx ty tz
+//             jacobian(6, 3) = -vi;
+//             jacobian(6, 4) = ui;
+//             jacobian(6, 5) = 0;
 
-            // g3 Jacobian wrt f
-            jacobian(6, 6) = 0;
-
-
-        }
+//             // g3 Jacobian wrt f
+//             jacobian(6, 6) = 0;
 
 
-};
+//         }
+
+
+// };
 
 
 class AbsoluteFisheyeHCProblemDepth : public HCProblemBase<5, 5, Image> {
