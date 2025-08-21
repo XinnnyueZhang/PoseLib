@@ -206,6 +206,7 @@ BenchmarkResult benchmark_w_extra_save_result(int n_problems, const ProblemOptio
     std::sort(runtimes.begin(), runtimes.end());
     result.runtime_ns_ = runtimes[runtimes.size() / 2];
     std::cout << "\r                                                                                \r";
+
     return result;
 }
 
@@ -221,6 +222,19 @@ void print_runtime(double runtime_ns) {
         std::cout << runtime_ns / 1e6 << " ms";
     } else {
         std::cout << runtime_ns / 1e9 << " s";
+    }
+}
+
+
+void print_runtime(std::ostream &out, double runtime_ns) {
+    if (runtime_ns < 1e3) {
+        out << runtime_ns << " ns";
+    } else if (runtime_ns < 1e6) {
+        out << runtime_ns / 1e3 << " us";
+    } else if (runtime_ns < 1e9) {
+        out << runtime_ns / 1e6 << " ms";
+    } else {
+        out << runtime_ns / 1e9 << " s";
     }
 }
 
@@ -249,7 +263,7 @@ void display_result(const std::vector<poselib::BenchmarkResult> &results) {
         double gt_found = result.found_gt_pose_ / num_tests * 100.0;
         double runtime_ns = result.runtime_ns_ / num_tests;
 
-        std::cout << std::setprecision(prec) << std::setw(6 * w) << result.name_;
+        std::cout << std::setprecision(prec) << std::setw(3 * w) << result.name_;
         std::cout << std::setprecision(prec) << std::setw(w) << solutions;
         std::cout << std::setprecision(prec) << std::setw(w) << valid_sols;
         std::cout << std::setprecision(prec) << std::setw(w) << gt_found;
@@ -257,8 +271,44 @@ void display_result(const std::vector<poselib::BenchmarkResult> &results) {
         print_runtime(runtime_ns);
         std::cout << "\n";
     }
+
 }
 
+
+void write_result(std::ostream &out, const std::vector<poselib::BenchmarkResult> &results) {
+    // Print PoseLib version and buidling type
+    out << "\n" << poselib_info() << "\n\n";
+
+    int w = 13;
+    // display header
+    out << std::setw(3 * w) << "Solver";
+    out << std::setw(w) << "Solutions";
+    out << std::setw(w) << "Valid";
+    out << std::setw(w) << "GT found";
+    out << std::setw(w) << "Runtime"
+        << "\n";
+    for (int i = 0; i < w * 6; ++i)
+        out << "-";
+    out << "\n";
+
+    int prec = 6;
+
+    for (const poselib::BenchmarkResult &result : results) {
+        double num_tests = static_cast<double>(result.instances_);
+        double solutions = result.solutions_ / num_tests;
+        double valid_sols = result.valid_solutions_ / static_cast<double>(result.solutions_) * 100.0;
+        double gt_found = result.found_gt_pose_ / num_tests * 100.0;
+        double runtime_ns = result.runtime_ns_ / num_tests;
+
+        out << std::setprecision(prec) << std::setw(3 * w) << result.name_;
+        out << std::setprecision(prec) << std::setw(w) << solutions;
+        out << std::setprecision(prec) << std::setw(w) << valid_sols;
+        out << std::setprecision(prec) << std::setw(w) << gt_found;
+        out << std::setprecision(prec) << std::setw(w - 3);
+        print_runtime(out, runtime_ns); // Pass the stream to print_runtime
+        out << "\n";
+    }
+}
 
 int main(int argc, char** argv) {
 
@@ -354,6 +404,12 @@ int main(int argc, char** argv) {
     results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_HC_depth_p4pf>(1e4, fisheye_4pts_opt, tol*1e4));
 
     display_result(results);
+
+
+    // write result to file
+    std::ofstream out("results_fov_" + std::to_string(fov) + "/table.txt");
+    write_result(out, results);
+    out.close();
 
     return 0;
 }
