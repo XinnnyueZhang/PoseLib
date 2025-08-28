@@ -269,8 +269,11 @@ bool UnknownFocalFisheyeValidator::is_valid(const AbsolutePoseProblemInstance &i
         double rd = std::sqrt(instance.x_point_fisheye_[i](0) * instance.x_point_fisheye_[i](0) + instance.x_point_fisheye_[i](1) * instance.x_point_fisheye_[i](1));
         double theta = rd / focal;
         Eigen::Vector3d x_fisheye = Eigen::Vector3d{instance.x_point_fisheye_[i](0) / rd * std::tan(theta), instance.x_point_fisheye_[i](1) / rd * std::tan(theta), 1.0};
-        double err = 1.0 - std::abs((x_fisheye).normalized()
-                                        .dot((pose.R() * instance.X_point_[i] + pose.t).normalized()));
+        double inner_product = (x_fisheye).normalized().dot((pose.R() * instance.X_point_[i] + pose.t).normalized());
+        if (inner_product < 0) {
+            return false;
+        }
+        double err = 1.0 - std::abs(inner_product);
         if (err > tol)
             return false;
     }
@@ -356,6 +359,7 @@ void generate_abspose_problems(int n_problems, std::vector<AbsolutePoseProblemIn
 
     for (int i = 0; i < n_problems; ++i) {
         AbsolutePoseProblemInstance instance;
+        instance.camera_fov_ = options.camera_fov_;
         set_random_pose(instance.pose_gt, options.upright_, options.planar_);
 
         if (options.unknown_scale_) {
@@ -409,8 +413,6 @@ void generate_abspose_problems(int n_problems, std::vector<AbsolutePoseProblemIn
                 x_fisheye.block<2, 1>(0, 0) = X_proj.block<2, 1>(0, 0) / X_proj(2) * instance.focal_gt;
             }
 
-            // probably not needed to be normalized
-            // x_fisheye.normalize();
 
             if (options.unknown_rd_) {
                 x.hnormalized();

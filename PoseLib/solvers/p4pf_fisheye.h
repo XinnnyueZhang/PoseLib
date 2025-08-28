@@ -11,6 +11,9 @@ namespace poselib {
     int p4pf_fisheye(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X, 
                      const Image &Img_initial, CameraPose *solutions, double *focals);
 
+    int p4pf_fisheye_lie(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X, 
+                     const Image &Img_initial, CameraPose *solutions, double *focals);
+
 }
 
 #endif

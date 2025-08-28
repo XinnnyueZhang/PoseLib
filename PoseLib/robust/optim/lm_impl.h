@@ -33,8 +33,9 @@
 #include "PoseLib/robust/robust_loss.h"
 #include "PoseLib/types.h"
 #include "optim_utils.h"
-
+#include <iostream>
 #include <memory>
+
 namespace poselib {
 
 /*
@@ -74,6 +75,7 @@ BundleStats lm_impl(Problem &problem, Model *parameters, const BundleOptions &op
 
     bool recompute_jac = true;
     for (stats.iterations = 0; stats.iterations < opt.max_iterations; ++stats.iterations) {
+
         // We only recompute jacobian and residual vector if last step was successful
         if (recompute_jac) {
             acc.reset_jacobian();

@@ -310,6 +310,26 @@ void write_result(std::ostream &out, const std::vector<poselib::BenchmarkResult>
     }
 }
 
+void write2table(std::ostream &out, const std::vector<poselib::BenchmarkResult> &results){
+
+
+    for (const poselib::BenchmarkResult &result : results) {
+        double num_tests = static_cast<double>(result.instances_);
+        double solutions = result.solutions_ / num_tests;
+        double valid_sols = result.valid_solutions_ / static_cast<double>(result.solutions_) * 100.0;
+        double gt_found = result.found_gt_pose_ / num_tests * 100.0;
+        double runtime_ns = result.runtime_ns_ / num_tests;
+
+        out << result.name_ << ",";
+        out << solutions << ",";
+        out << valid_sols << ",";
+        out << gt_found << ",";
+        out << runtime_ns << ",";
+        out << "\n";
+    }
+
+}
+
 int main(int argc, char** argv) {
 
     if (argc != 2) {
@@ -321,46 +341,26 @@ int main(int argc, char** argv) {
     std::vector<poselib::BenchmarkResult> results;
 
     poselib::ProblemOptions options;
-    // options.camera_fov_ = 45; // Narrow
-    // options.camera_fov_ = 75; // Medium
-    // options.camera_fov_ = 120; // Wide
-    options.camera_fov_ = fov; // Wide
-
+    options.camera_fov_ = fov;
     double tol = 1e-6;
 
-    // // P3P
-    // poselib::ProblemOptions p3p_opt = options;
-    // p3p_opt.n_point_point_ = 3;
-    // p3p_opt.n_point_line_ = 0;
-    // results.push_back(poselib::benchmark<poselib::SolverP3P>(1e5, p3p_opt, tol));
-    // results.push_back(poselib::benchmark<poselib::SolverP3P_ding>(1e5, p3p_opt, tol));
-
-    // // Sampling + p3p
-    // poselib::ProblemOptions fisheye_3pts_opt = options;
-    // fisheye_3pts_opt.n_point_point_ = 3;
-    // fisheye_3pts_opt.unknown_focal_ = true;
-    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P3P>(1e4, fisheye_3pts_opt, tol*1e4));
-    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P3P_LM>(1e4, fisheye_3pts_opt, tol*1e4));
+    // Sampling + p3p
+    poselib::ProblemOptions fisheye_3pts_opt = options;
+    fisheye_3pts_opt.n_point_point_ = 3;
+    fisheye_3pts_opt.unknown_focal_ = true;
+    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P3P>(1e4, fisheye_3pts_opt, tol*1e4));
 
     // NEW for Fisheye camera resectioning with unknown focal
     poselib::ProblemOptions fisheye_4pts_opt = options;
     fisheye_4pts_opt.n_point_point_ = 4;
     fisheye_4pts_opt.unknown_focal_ = true;
 
-    // // other tests
-    // // random initial + LM refiner
-    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_random_LM>(1e4, fisheye_4pts_opt, tol*1e4));
-
-    // // gt debug + HC pose refiner
-    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_HC_pose_gtDebug>(1e4, fisheye_4pts_opt, tol*1e4));
-
-    // // small perturbation from gt pose + HC depth refiner
-    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_HC_depth_gtDebug>(1e4, fisheye_4pts_opt, tol*1e4));
-
-    // // random initial + HC depth refiner
-    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_HC_depth_random>(1e4, fisheye_4pts_opt, tol*1e4));
-
-
+    // Sampling + p3p
+    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P3P_focal_LM>(1e4, fisheye_4pts_opt, tol*1e4));
+    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P3P_fov_LM>(1e4, fisheye_4pts_opt, tol*1e4));
+    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P3P_HC>(1e4, fisheye_4pts_opt, tol*1e4));
+    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P3P_focal_all_LM>(1e4, fisheye_4pts_opt, tol*1e4));
+    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P3P_fov_all_LM>(1e4, fisheye_4pts_opt, tol*1e4));
 
     // p4pfr
     // p4pfr + no refiner
@@ -370,10 +370,13 @@ int main(int argc, char** argv) {
     results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PFr_LM>(1e4, fisheye_4pts_opt, tol*1e4));
 
     // p4pfr as initial + HC pose refiner
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_HC_pose_p4pfr>(1e4, fisheye_4pts_opt, tol*1e4));
+    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PFr_HC_pose_Lie>(1e4, fisheye_4pts_opt, tol*1e4));
+
+    // p4pfr as initial + HC pose refiner
+    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PFr_HC_pose>(1e4, fisheye_4pts_opt, tol*1e4));
     
     // p4pfr as initial + HC depth refiner
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_HC_depth_p4pfr>(1e4, fisheye_4pts_opt, tol*1e4));
+    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PFr_HC_depth>(1e4, fisheye_4pts_opt, tol*1e4));
 
 
     // p3.5pf
@@ -384,10 +387,10 @@ int main(int argc, char** argv) {
     results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P35PF_LM>(1e4, fisheye_4pts_opt, tol*1e4));
 
     // p3.5pf + HC pose refiner
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_HC_pose_p35pf>(1e4, fisheye_4pts_opt, tol*1e4));
+    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P35PF_HC_pose>(1e4, fisheye_4pts_opt, tol*1e4));
 
     // p3.5pf + HC depth refiner
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_HC_depth_p35pf>(1e4, fisheye_4pts_opt, tol*1e4));
+    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P35PF_HC_depth>(1e4, fisheye_4pts_opt, tol*1e4));
 
 
     // p4pf
@@ -398,18 +401,23 @@ int main(int argc, char** argv) {
     results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PF_LM>(1e4, fisheye_4pts_opt, tol*1e4));
 
     // p4pf + HC pose refiner
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_HC_pose_p4pf>(1e4, fisheye_4pts_opt, tol*1e4));
+    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PF_HC_pose>(1e4, fisheye_4pts_opt, tol*1e4));
 
     // p4pf + HC depth refiner
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_HC_depth_p4pf>(1e4, fisheye_4pts_opt, tol*1e4));
+    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PF_HC_depth>(1e4, fisheye_4pts_opt, tol*1e4));
 
     display_result(results);
 
 
     // write result to file
-    std::ofstream out("results_fov_" + std::to_string(fov) + "/table.txt");
+    std::ofstream out("results_fov_" + std::to_string(fov) + "/result.txt");
     write_result(out, results);
     out.close();
+
+    // write result to table
+    std::ofstream out_table("results_fov_" + std::to_string(fov) + "/table.txt");
+    write2table(out_table, results);
+    out_table.close();
 
     return 0;
 }

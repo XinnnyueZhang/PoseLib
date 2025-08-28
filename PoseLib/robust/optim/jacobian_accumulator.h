@@ -32,7 +32,7 @@
 #include "../../types.h"
 #include "../robust_loss.h"
 #include "optim_utils.h"
-
+#include <iostream>
 #include <memory>
 
 namespace poselib {

@@ -14,15 +14,15 @@ add_executable(benchmark_fisheye
 
 target_link_libraries(benchmark_fisheye PRIVATE PoseLib::PoseLib Eigen3::Eigen)
 
-add_executable(benchmark_debugHC
-    benchmark_debugHC.cc
-    problem_generator.cc
-)
+# add_executable(benchmark_debugHC
+#     benchmark_debugHC.cc
+#     problem_generator.cc
+# )
 
-target_link_libraries(benchmark_debugHC PRIVATE PoseLib::PoseLib Eigen3::Eigen)
+# target_link_libraries(benchmark_debugHC PRIVATE PoseLib::PoseLib Eigen3::Eigen)
 
 install(
-  TARGETS benchmark benchmark_fisheye benchmark_debugHC
+  TARGETS benchmark benchmark_fisheye
   RUNTIME DESTINATION bin
   COMPONENT "${INSTALL_BIN_DIR}"
 )
@@ -30,4 +30,4 @@ install(
 # Compilation options
 set_compile_flags(benchmark)
 set_compile_flags(benchmark_fisheye)
-set_compile_flags(benchmark_debugHC)
+# set_compile_flags(benchmark_debugHC)

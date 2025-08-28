@@ -1182,8 +1182,8 @@ void SimpleFisheyeCameraModel::project(const std::vector<double> &params, const 
 
 void SimpleFisheyeCameraModel::unproject(const std::vector<double> &params, const Eigen::Vector2d &xp,
                                          Eigen::Vector3d *x) {
-    const double px = (xp(0) - params[1]) / params[0];
-    const double py = (xp(1) - params[2]) / params[0];
+    const double px = (xp(0) - params[1]);
+    const double py = (xp(1) - params[2]);
     const double rd = std::sqrt(px * px + py * py);
 
     if (rd > 1e-8) {
@@ -1198,8 +1198,8 @@ void SimpleFisheyeCameraModel::unproject(const std::vector<double> &params, cons
             (*x)(2) = 0.0;
         }
     } else {
-        (*x)(0) = px;
-        (*x)(1) = py;
+        (*x)(0) = px / params[0];
+        (*x)(1) = py / params[0];
         (*x)(2) = std::sqrt(1 - rd * rd);
     }
 

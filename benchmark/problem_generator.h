@@ -13,6 +13,7 @@ struct AbsolutePoseProblemInstance {
     double scale_gt = 1.0;
     double focal_gt = 1.0;
     double k_gt = 0.0;
+    double camera_fov_ = 0.0;
 
     // Point-to-point correspondences
     std::vector<Eigen::Vector3d> x_point_;
