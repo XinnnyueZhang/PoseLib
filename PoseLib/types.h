@@ -53,6 +53,7 @@ struct RansacStats {
     size_t num_inliers = 0;
     double inlier_ratio = 0;
     double model_score = std::numeric_limits<double>::max();
+    long long runtime = 0;
 };
 
 struct BundleOptions {
@@ -124,6 +125,9 @@ struct AbsolutePoseOptions {
     // and not on the actual image size.
     // Setting to 0 (or negative) disables checking.
     double min_fov = 5.0; // circa 500mm lens 35mm-equivalent
+
+    // NEW for fisheye
+    std::string minimal_solver = "P4Pfr_LM";
 };
 
 struct RelativePoseOptions {

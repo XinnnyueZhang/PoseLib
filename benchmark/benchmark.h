@@ -1150,14 +1150,11 @@ struct SolverFisheye_P3P_focal_LM {
 
             for (int j = 0; j < nSols_p3p; j++) {
 
-                double res = 0.0;
-                // get reprojection error
+                // check reprojection with the 4th point
                 Eigen::Vector2d reprojected;
-                for (int i = 0; i < 3; i++) {
-                    Eigen::Vector3d x_ = solutions_p3p[j].R() * instance.X_point_[i] + solutions_p3p[j].t;
-                    camera.project(x_, &reprojected);
-                    res += (reprojected - p2d[i]).norm();
-                }
+                Eigen::Vector3d x_ = solutions_p3p[j].R() * instance.X_point_[3] + solutions_p3p[j].t;
+                camera.project(x_, &reprojected);
+                double res = (reprojected - p2d[3]).norm();
 
                 if (res < min_reproj_error) {
                     min_reproj_error = res;
@@ -1226,14 +1223,12 @@ struct SolverFisheye_P3P_fov_LM {
 
             for (int j = 0; j < nSols_p3p; j++) {
 
-                double res = 0.0;
-                // get reprojection error
+                // check reprojection with the 4th point
+
                 Eigen::Vector2d reprojected;
-                for (int i = 0; i < 3; i++) {
-                    Eigen::Vector3d x_ = solutions_p3p[j].R() * instance.X_point_[i] + solutions_p3p[j].t;
-                    camera.project(x_, &reprojected);
-                    res += (reprojected - p2d[i]).norm();
-                }
+                Eigen::Vector3d x_ = solutions_p3p[j].R() * instance.X_point_[3] + solutions_p3p[j].t;
+                camera.project(x_, &reprojected);
+                double res = (reprojected - p2d[3]).norm();
 
                 if (res < min_reproj_error) {
                     min_reproj_error = res;
@@ -1301,14 +1296,11 @@ struct SolverFisheye_P3P_HC {
 
             for (int j = 0; j < nSols_p3p; j++) {
 
-                double res = 0.0;
-                // get reprojection error
+
                 Eigen::Vector2d reprojected;
-                for (int i = 0; i < 3; i++) {
-                    Eigen::Vector3d x_ = solutions_p3p[j].R() * instance.X_point_[i] + solutions_p3p[j].t;
-                    camera.project(x_, &reprojected);
-                    res += (reprojected - p2d[i]).norm();
-                }
+                Eigen::Vector3d x_ = solutions_p3p[j].R() * instance.X_point_[3] + solutions_p3p[j].t;
+                camera.project(x_, &reprojected);
+                double res = (reprojected - p2d[3]).norm();
 
                 if (res < min_reproj_error) {
                     min_reproj_error = res;

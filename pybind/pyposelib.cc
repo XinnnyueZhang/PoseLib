@@ -277,6 +277,29 @@ std::pair<Image, py::dict> estimate_absolute_pose_wrapper(const std::vector<Eige
     return std::make_pair(image, output_dict);
 }
 
+// NEW: Fisheye absolute pose and focal length estimation
+std::pair<Image, py::dict> estimate_absolute_pose_fisheye_wrapper(const std::vector<Eigen::Vector2d> &points2D,
+                                                          const std::vector<Eigen::Vector3d> &points3D,
+                                                          const py::dict &camera_dict, const py::dict &opt_dict) {
+
+    Camera camera = camera_from_dict(camera_dict);
+
+    AbsolutePoseOptions opt;
+    update_absolute_pose_options(opt_dict, opt);
+
+    Image image;
+    image.camera = camera;
+    std::vector<char> inlier_mask;
+
+    RansacStats stats = estimate_absolute_pose_fisheye(points2D, points3D, opt, &image, &inlier_mask);
+
+    py::dict output_dict;
+    write_to_dict(stats, output_dict);
+    output_dict["inliers"] = convert_inlier_vector(inlier_mask);
+
+    return std::make_pair(image, output_dict);
+}
+
 std::pair<Image, py::dict> refine_absolute_pose_wrapper(const std::vector<Eigen::Vector2d> points2D,
                                                         const std::vector<Eigen::Vector3d> points3D,
                                                         const CameraPose initial_pose, const py::dict &camera_dict,
@@ -1032,6 +1055,12 @@ PYBIND11_MODULE(poselib, m) {
     // Robust estimators
     m.def("estimate_absolute_pose", &poselib::estimate_absolute_pose_wrapper, py::arg("points2D"), py::arg("points3D"),
           py::arg("camera_dict"), py::arg("opt") = py::dict(), "Absolute pose estimation with non-linear refinement.");
+
+    // NEW: Fisheye absolute pose and focal length estimation
+    m.def("estimate_absolute_pose_fisheye", &poselib::estimate_absolute_pose_fisheye_wrapper, py::arg("points2D"),
+          py::arg("points3D"), py::arg("camera_dict"), py::arg("opt") = py::dict(),
+          "Fisheye absolute pose and focal length estimation with non-linear refinement.");
+
     m.def("estimate_absolute_pose_pnpl", &poselib::estimate_absolute_pose_pnpl_wrapper, py::arg("points2D"),
           py::arg("points3D"), py::arg("lines2D_1"), py::arg("lines2D_2"), py::arg("lines3D_1"), py::arg("lines3D_2"),
           py::arg("camera_dict"), py::arg("opt") = py::dict(),

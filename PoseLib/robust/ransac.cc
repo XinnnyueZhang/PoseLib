@@ -39,6 +39,9 @@
 #include "PoseLib/solvers/relpose_5pt.h"
 #include "ransac_impl.h"
 
+#include <chrono>
+#include <iostream>
+
 namespace poselib {
 
 RansacStats ransac_pnp(const std::vector<Point2D> &x, const std::vector<Point3D> &X, const AbsolutePoseOptions &opt,
@@ -66,6 +69,47 @@ RansacStats ransac_pnpf(const std::vector<Point2D> &x, const std::vector<Point3D
 
     FocalAbsolutePoseEstimator estimator(opt, x, X);
     RansacStats stats = ransac<FocalAbsolutePoseEstimator>(estimator, opt.ransac, best_model);
+
+    get_inliers(*best_model, x, X, opt.max_error * opt.max_error, best_inliers);
+
+    return stats;
+}
+
+
+// NEW: Fisheye absolute pose and focal length estimation   
+RansacStats ransac_pnpf_fisheye(const std::vector<Point2D> &x, const std::vector<Point3D> &X, const AbsolutePoseOptions &opt,
+    Image *best_model, std::vector<char> *best_inliers) {
+
+    best_model->pose.q << 1.0, 0.0, 0.0, 0.0;
+    best_model->pose.t.setZero();
+    best_model->camera.model_id = CameraModelId::SIMPLE_FISHEYE;
+    best_model->camera.width = 0;
+    best_model->camera.height = 0;
+    best_model->camera.params = {1.0, 0.0, 0.0};
+
+
+    FisheyeFocalAbsolutePoseEstimator::Solver chosen_solver;
+    if (opt.minimal_solver == "P4Pfr") {
+        chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P4Pfr;
+    } else if (opt.minimal_solver == "P4Pfr_LM") {
+        chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P4Pfr_LM;
+    } else if (opt.minimal_solver == "P4Pfr_HC_pose") {
+        chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P4Pfr_HC_pose;
+    } else if (opt.minimal_solver == "P4Pfr_HC_depth") {
+        chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P4Pfr_HC_depth;
+    } else if (opt.minimal_solver == "P3Pf_sampling") {
+        chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P3Pf_sampling;
+    } else {
+        std::cout << "Invalid minimal solver: " << opt.minimal_solver << std::endl;
+        return RansacStats(); // Exit if solver is invalid
+    }
+
+    FisheyeFocalAbsolutePoseEstimator estimator(opt, x, X, chosen_solver);
+
+    auto start_time = std::chrono::high_resolution_clock::now();
+    RansacStats stats = ransac<FisheyeFocalAbsolutePoseEstimator>(estimator, opt.ransac, best_model);
+    auto end_time = std::chrono::high_resolution_clock::now();
+    stats.runtime = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
 
     get_inliers(*best_model, x, X, opt.max_error * opt.max_error, best_inliers);
 

@@ -83,6 +83,9 @@ void update_absolute_pose_options(const py::dict &input, AbsolutePoseOptions &op
         opt.bundle.loss_scale = 0.5 * opt.max_error;
         update_bundle_options(input["bundle"].cast<py::dict>(), opt.bundle);
     }
+    if (input.contains("minimal_solver")) {
+        opt.minimal_solver = input["minimal_solver"].cast<std::string>();
+    }
 }
 
 void update_relative_pose_options(const py::dict &input, RelativePoseOptions &opt) {
@@ -214,6 +217,7 @@ void write_to_dict(const RansacStats &stats, py::dict &dict) {
     dict["num_inliers"] = stats.num_inliers;
     dict["inlier_ratio"] = stats.inlier_ratio;
     dict["model_score"] = stats.model_score;
+    dict["runtime"] = stats.runtime;
 }
 
 Camera camera_from_dict(const py::dict &camera_dict) {

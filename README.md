@@ -78,6 +78,12 @@ The python bindings also expose the `poselib.Camera` class with `focal(), focal_
 ## Python bindings
 The python bindings can be installed by running `pip install .`. The python bindings expose all minimal solvers, e.g. `poselib.p3p(x,X)`, as well as all robust estimators from [robust.h](PoseLib/robust.h). 
 
+For developing the code and build faster
+```bash
+pip install -e .
+python setup.py build_ext --inplace
+```
+
 Examples of how the robust estimators can be called are
 ```python
 camera = {'model': 'SIMPLE_PINHOLE', 'width': 1200, 'height': 800, 'params': [960, 600, 400]}
