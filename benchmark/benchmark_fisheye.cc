@@ -362,49 +362,49 @@ int main(int argc, char** argv) {
     results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P3P_focal_all_LM>(1e4, fisheye_4pts_opt, tol*1e4));
     results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P3P_fov_all_LM>(1e4, fisheye_4pts_opt, tol*1e4));
 
-    // p4pfr
-    // p4pfr + no refiner
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PFr>(1e4, fisheye_4pts_opt, tol*1e4));
+    // // p4pfr
+    // // p4pfr + no refiner
+    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PFr>(1e4, fisheye_4pts_opt, tol*1e4));
 
-    // p4pfr + LM refiner
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PFr_LM>(1e4, fisheye_4pts_opt, tol*1e4));
+    // // p4pfr + LM refiner
+    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PFr_LM>(1e4, fisheye_4pts_opt, tol*1e4));
 
-    // p4pfr as initial + HC pose refiner
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PFr_HC_pose_Lie>(1e4, fisheye_4pts_opt, tol*1e4));
+    // // p4pfr as initial + HC pose refiner
+    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PFr_HC_pose_Lie>(1e4, fisheye_4pts_opt, tol*1e4));
 
-    // p4pfr as initial + HC pose refiner
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PFr_HC_pose>(1e4, fisheye_4pts_opt, tol*1e4));
+    // // p4pfr as initial + HC pose refiner
+    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PFr_HC_pose>(1e4, fisheye_4pts_opt, tol*1e4));
     
-    // p4pfr as initial + HC depth refiner
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PFr_HC_depth>(1e4, fisheye_4pts_opt, tol*1e4));
+    // // p4pfr as initial + HC depth refiner
+    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PFr_HC_depth>(1e4, fisheye_4pts_opt, tol*1e4));
 
 
-    // p3.5pf
-    // p3.5pf + no refiner
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P35PF>(1e4, fisheye_4pts_opt, tol*1e4));
+    // // p3.5pf
+    // // p3.5pf + no refiner
+    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P35PF>(1e4, fisheye_4pts_opt, tol*1e4));
 
-    // p3.5pf + LM refiner
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P35PF_LM>(1e4, fisheye_4pts_opt, tol*1e4));
+    // // p3.5pf + LM refiner
+    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P35PF_LM>(1e4, fisheye_4pts_opt, tol*1e4));
 
-    // p3.5pf + HC pose refiner
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P35PF_HC_pose>(1e4, fisheye_4pts_opt, tol*1e4));
+    // // p3.5pf + HC pose refiner
+    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P35PF_HC_pose>(1e4, fisheye_4pts_opt, tol*1e4));
 
-    // p3.5pf + HC depth refiner
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P35PF_HC_depth>(1e4, fisheye_4pts_opt, tol*1e4));
+    // // p3.5pf + HC depth refiner
+    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P35PF_HC_depth>(1e4, fisheye_4pts_opt, tol*1e4));
 
 
-    // p4pf
-    // p4pf + no refiner
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PF>(1e4, fisheye_4pts_opt, tol*1e4));
+    // // p4pf
+    // // p4pf + no refiner
+    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PF>(1e4, fisheye_4pts_opt, tol*1e4));
 
-    // p4pf + LM refiner
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PF_LM>(1e4, fisheye_4pts_opt, tol*1e4));
+    // // p4pf + LM refiner
+    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PF_LM>(1e4, fisheye_4pts_opt, tol*1e4));
 
-    // p4pf + HC pose refiner
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PF_HC_pose>(1e4, fisheye_4pts_opt, tol*1e4));
+    // // p4pf + HC pose refiner
+    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PF_HC_pose>(1e4, fisheye_4pts_opt, tol*1e4));
 
-    // p4pf + HC depth refiner
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PF_HC_depth>(1e4, fisheye_4pts_opt, tol*1e4));
+    // // p4pf + HC depth refiner
+    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PF_HC_depth>(1e4, fisheye_4pts_opt, tol*1e4));
 
     display_result(results);
 

@@ -210,4 +210,131 @@ namespace poselib {
         return nSols_HC;
     }
 
+    int p3p_fisheye_lm(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X,
+                     const double image_size, CameraPoseVector *solutions, std::vector<double> *focals) {
+        
+        double half_size = image_size / 2.0;
+        
+        int nSols = 0;
+        double min_reproj_error = std::numeric_limits<double>::max();
+        double focal_best = 0.0;
+        CameraPose pose_best;
+
+        // TODO: check the gt fov 200 deg
+        std::vector<double> fov_list = {100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220};
+        for (double fov : fov_list) {
+            double focal = half_size / std::tan(fov / 2.0 * M_PI / 180.0);
+            
+            Camera camera;
+            camera.model_id = 12;
+            camera.params = {focal, 0.0, 0.0};
+
+            std::vector<Eigen::Vector3d> x_fisheye_normalized(3);
+            for (int i = 0; i < 3; i++) {
+                camera.unproject(x[i], &x_fisheye_normalized[i]);
+            }
+
+            CameraPoseVector solutions_p3p;
+            int nSols_p3p = p3p_ding(x_fisheye_normalized, X, &solutions_p3p);
+
+            for (int j = 0; j < nSols_p3p; j++) {
+
+                // check reprojection with the 4th point
+                Eigen::Vector2d reprojected;
+                Eigen::Vector3d x_ = solutions_p3p[j].R() * X[3] + solutions_p3p[j].t;
+                camera.project(x_, &reprojected);
+                double res = (reprojected - x[3]).norm();
+
+                if (res < min_reproj_error) {
+                    min_reproj_error = res;
+                    focal_best = focal;
+                    pose_best = solutions_p3p[j];
+                }
+            }
+        }
+
+
+        CameraPose pose_initial = pose_best;
+        Camera camera_initial;
+        camera_initial.model_id = 12;
+        camera_initial.params = {focal_best, 0.0, 0.0};
+        Image Img_initial(pose_initial, camera_initial);
+
+        BundleOptions bundle_opt;
+        // bundle_opt.step_tol = 1e-12;
+        bundle_opt.refine_focal_length = true;
+        std::vector<size_t> camera_refine_idx = Img_initial.camera.get_param_refinement_idx(bundle_opt);
+
+        AbsolutePoseRefiner<> refiner(x, X, camera_refine_idx);
+        lm_impl<decltype(refiner)>(refiner, &Img_initial, bundle_opt);
+
+        solutions->push_back(Img_initial.pose);
+        focals->push_back(Img_initial.camera.params[0]);
+        nSols++;
+
+        return nSols;
+    }
+
+    int p3p_fisheye_hc(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X,
+                     const double image_size, CameraPoseVector *solutions, std::vector<double> *focals) {
+        
+        double half_size = image_size / 2.0;
+        
+        int nSols = 0;
+        double min_reproj_error = std::numeric_limits<double>::max();
+        double focal_best = 0.0;
+        CameraPose pose_best;
+
+        // TODO: check the gt fov 200 deg
+        std::vector<double> fov_list = {100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220};
+        for (double fov : fov_list) {
+            double focal = half_size / std::tan(fov / 2.0 * M_PI / 180.0);
+            
+            Camera camera;
+            camera.model_id = 12;
+            camera.params = {focal, 0.0, 0.0};
+
+            std::vector<Eigen::Vector3d> x_fisheye_normalized(3);
+            for (int i = 0; i < 3; i++) {
+                camera.unproject(x[i], &x_fisheye_normalized[i]);
+            }
+
+            CameraPoseVector solutions_p3p;
+            int nSols_p3p = p3p_ding(x_fisheye_normalized, X, &solutions_p3p);
+
+            for (int j = 0; j < nSols_p3p; j++) {
+
+                // check reprojection with the 4th point
+                Eigen::Vector2d reprojected;
+                Eigen::Vector3d x_ = solutions_p3p[j].R() * X[3] + solutions_p3p[j].t;
+                camera.project(x_, &reprojected);
+                double res = (reprojected - x[3]).norm();
+
+                if (res < min_reproj_error) {
+                    min_reproj_error = res;
+                    focal_best = focal;
+                    pose_best = solutions_p3p[j];
+                }
+            }
+        }
+
+
+        CameraPose pose_initial = pose_best;
+        Camera camera_initial;
+        camera_initial.model_id = 12;
+        camera_initial.params = {focal_best, 0.0, 0.0};
+        Image Img_initial(pose_initial, camera_initial);
+
+        CameraPose solution_HC;
+        double focal_HC;
+        int HC_success = p4pf_fisheye_lie(x, X, Img_initial, &solution_HC, &focal_HC);
+
+        if (HC_success == 1) {
+            solutions->push_back(solution_HC);
+            focals->push_back(focal_HC);
+            nSols++;
+        }
+
+        return nSols;
+    }
 }

@@ -1121,8 +1121,6 @@ struct SolverFisheye_P3P_focal_LM {
     static inline int solve(const AbsolutePoseProblemInstance &instance, poselib::CameraPoseVector *solutions,
         std::vector<double> *focals) {
 
-        //TODO: using the reprojection error find the best and run LM
-
         // dehomogenize input
         std::vector<Eigen::Vector2d> p2d(instance.x_point_fisheye_.size());
         for (int i = 0; i < instance.x_point_fisheye_.size(); ++i) {
@@ -1146,7 +1144,7 @@ struct SolverFisheye_P3P_focal_LM {
             }
 
             CameraPoseVector solutions_p3p;
-            int nSols_p3p = p3p(x_fisheye_normalized, instance.X_point_, &solutions_p3p);
+            int nSols_p3p = p3p_ding(x_fisheye_normalized, instance.X_point_, &solutions_p3p);
 
             for (int j = 0; j < nSols_p3p; j++) {
 
@@ -1219,7 +1217,7 @@ struct SolverFisheye_P3P_fov_LM {
             }
 
             CameraPoseVector solutions_p3p;
-            int nSols_p3p = p3p(x_fisheye_normalized, instance.X_point_, &solutions_p3p);
+            int nSols_p3p = p3p_ding(x_fisheye_normalized, instance.X_point_, &solutions_p3p);
 
             for (int j = 0; j < nSols_p3p; j++) {
 
@@ -1292,7 +1290,7 @@ struct SolverFisheye_P3P_HC {
             }
 
             CameraPoseVector solutions_p3p;
-            int nSols_p3p = p3p(x_fisheye_normalized, instance.X_point_, &solutions_p3p);
+            int nSols_p3p = p3p_ding(x_fisheye_normalized, instance.X_point_, &solutions_p3p);
 
             for (int j = 0; j < nSols_p3p; j++) {
 
@@ -1365,7 +1363,7 @@ struct SolverFisheye_P3P_focal_all_LM {
             }
 
             CameraPoseVector solutions_p3p;
-            int nSols_p3p = p3p(x_fisheye_normalized, instance.X_point_, &solutions_p3p);
+            int nSols_p3p = p3p_ding(x_fisheye_normalized, instance.X_point_, &solutions_p3p);
 
             for (int j = 0; j < nSols_p3p; j++) {
 
@@ -1434,7 +1432,7 @@ struct SolverFisheye_P3P_fov_all_LM {
             }
 
             CameraPoseVector solutions_p3p;
-            int nSols_p3p = p3p(x_fisheye_normalized, instance.X_point_, &solutions_p3p);
+            int nSols_p3p = p3p_ding(x_fisheye_normalized, instance.X_point_, &solutions_p3p);
 
             for (int j = 0; j < nSols_p3p; j++) {
 

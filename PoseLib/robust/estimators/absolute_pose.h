@@ -113,11 +113,12 @@ class FocalAbsolutePoseEstimator {
 
 class FisheyeFocalAbsolutePoseEstimator {
   public:
-    enum Solver { P4Pfr = 0, P4Pfr_LM = 1, P4Pfr_HC_pose = 2, P4Pfr_HC_depth = 3, P3Pf_sampling = 4 };
+    enum Solver { P4Pfr = 0, P4Pfr_LM = 1, P4Pfr_HC_pose = 2, P4Pfr_HC_depth = 3, 
+      P3P_sampling_LM = 4, P3P_sampling_HC = 5 };
 
     FisheyeFocalAbsolutePoseEstimator(const AbsolutePoseOptions &opt, const std::vector<Point2D> &points2D,
-                               const std::vector<Point3D> &points3D, Solver solv = Solver::P4Pfr_LM)
-        : sample_sz(4), num_data(points2D.size()), minimal_solver(solv), opt(opt),
+                               const std::vector<Point3D> &points3D, Solver solv = Solver::P4Pfr_LM, double image_size_ = 0.0)
+        : sample_sz(4), num_data(points2D.size()), image_size(image_size_), minimal_solver(solv), opt(opt),
           x(points2D), X(points3D), max_focal_length(compute_max_focal_length(opt.min_fov)),
           sampler(num_data, sample_sz, opt.ransac) {
         xs.resize(sample_sz);
@@ -136,6 +137,7 @@ class FisheyeFocalAbsolutePoseEstimator {
   public:
     size_t sample_sz;
     const size_t num_data;
+    const double image_size;
 
     bool refine_minimal_sample = false;
     bool filter_minimal_sample = false;
@@ -147,6 +149,7 @@ class FisheyeFocalAbsolutePoseEstimator {
     const std::vector<Point2D> &x;
     const std::vector<Point3D> &X;
     const double max_focal_length = -1.0;
+    
 
     RandomSampler sampler;
     // pre-allocated vectors for sampling

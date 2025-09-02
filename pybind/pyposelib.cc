@@ -300,6 +300,23 @@ std::pair<Image, py::dict> estimate_absolute_pose_fisheye_wrapper(const std::vec
     return std::make_pair(image, output_dict);
 }
 
+std::pair<Camera, py::dict> recalibrate_camera_wrapper(const std::vector<Eigen::Vector2d> &points2D, const py::dict &cam_source_dict, 
+                                    const py::dict &cam_target_dict) {
+    
+    Camera cam_source = camera_from_dict(cam_source_dict);
+    Camera cam_target = camera_from_dict(cam_target_dict);
+
+    BundleOptions bundle_opt;
+    bundle_opt.refine_focal_length = true;
+
+    BundleStats stats = recalibrate(points2D, cam_source, &cam_target, bundle_opt);
+
+    py::dict output_dict;
+    write_to_dict(stats, output_dict);
+    
+    return std::make_pair(cam_target, output_dict);
+}
+
 std::pair<Image, py::dict> refine_absolute_pose_wrapper(const std::vector<Eigen::Vector2d> points2D,
                                                         const std::vector<Eigen::Vector3d> points3D,
                                                         const CameraPose initial_pose, const py::dict &camera_dict,
@@ -1060,6 +1077,9 @@ PYBIND11_MODULE(poselib, m) {
     m.def("estimate_absolute_pose_fisheye", &poselib::estimate_absolute_pose_fisheye_wrapper, py::arg("points2D"),
           py::arg("points3D"), py::arg("camera_dict"), py::arg("opt") = py::dict(),
           "Fisheye absolute pose and focal length estimation with non-linear refinement.");
+    
+    m.def("recalibrate_camera", &poselib::recalibrate_camera_wrapper, py::arg("points2D"), py::arg("cam_source_dict"),
+          py::arg("cam_target_dict"), "Camera recalibration with focal length only.");
 
     m.def("estimate_absolute_pose_pnpl", &poselib::estimate_absolute_pose_pnpl_wrapper, py::arg("points2D"),
           py::arg("points3D"), py::arg("lines2D_1"), py::arg("lines2D_2"), py::arg("lines3D_1"), py::arg("lines3D_2"),

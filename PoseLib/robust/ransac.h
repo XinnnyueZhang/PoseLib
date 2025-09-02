@@ -45,7 +45,7 @@ RansacStats ransac_pnpf(const std::vector<Point2D> &x, const std::vector<Point3D
                         Image *best_model, std::vector<char> *best_inliers);
 
 // NEW: Points need to be centered. Returns a SIMPLE_FISHEYE camera with principal point (0,0)
-RansacStats ransac_pnpf_fisheye(const std::vector<Point2D> &x, const std::vector<Point3D> &X, const AbsolutePoseOptions &opt,
+RansacStats ransac_pnpf_fisheye(const std::vector<Point2D> &x, const std::vector<Point3D> &X, const double image_size, const AbsolutePoseOptions &opt,
     Image *best_model, std::vector<char> *best_inliers);
                         
 // Points need to be centered. Returns a SIMPLE_DIVISION camera with principal point (0,0)

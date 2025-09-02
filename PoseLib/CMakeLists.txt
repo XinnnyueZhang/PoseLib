@@ -56,6 +56,7 @@ set(SOURCES
     robust/estimators/homography.cc
     robust/optim/lm_impl.cc
     HCsolvers/HCproblems/helper.cc
+    robust/recalibrator.cc
 )
 
 # Set HEADERS_PUBLIC variable
@@ -121,6 +122,7 @@ set(HEADERS_PUBLIC
     HCsolvers/HCproblems/HCproblem_base.h
     HCsolvers/HCproblems/absolute_fisheye.h
     HCsolvers/HCproblems/helper.h
+    robust/recalibrator.h
 )
 
 # Set HEADERS_PRIVATE variable
