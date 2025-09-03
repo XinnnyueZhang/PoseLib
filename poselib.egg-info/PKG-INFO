@@ -1,9 +1,6 @@
-Metadata-Version: 2.4
+Metadata-Version: 2.1
 Name: poselib
 Version: 2.1.0
 Author: Viktor Larsson and contributors
 Author-email: viktor.larsson@math.lth.se
 License-File: LICENSE
-Dynamic: author
-Dynamic: author-email
-Dynamic: license-file

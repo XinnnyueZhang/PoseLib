@@ -1,8 +1,7 @@
 import argparse
 from pathlib import Path
-import os
-
-from ipdb import set_trace
+import pickle
+import numpy as np
 
 from hloc import (
     extract_features,
@@ -16,15 +15,14 @@ from hloc import (
 from hloc.pipelines.Cambridge.utils import evaluate
 
 import pycolmap
-import pickle
-
 import poselib
-import numpy as np
+
+from ipdb import set_trace
+
 
         
 def getQueryList(test_list_dir, query_list_dir, query_info_dir, gt_sfm_dir, ref_sfm_dir, num_remove_neighbours=10):
     # keep 2n frames -> remove n frames -> keep 1 as query image -> remove n-1 frames -> keep 2n frames -> ...
-    # TODO: sort the image by names and treat cam1 and cam2 separately
 
     if test_list_dir.exists() and query_list_dir.exists() and query_info_dir.exists() and (ref_sfm_dir / "images.bin").exists():
         return
@@ -103,12 +101,13 @@ def run_scene(gt_dir, results, num_covis, num_loc, num_remove_neighbours=5):
     images = gt_dir / "images"
     gt_sfm = gt_dir / "colmap/model"
 
-    ref_sfm = gt_dir / "processed_without_intrinsics/colmap" # to be filled
-    query_dir = gt_dir / "processed_without_intrinsics/data"
+    ref_sfm = gt_dir / "processed_remove_neighbours/colmap" # to be filled
+    query_dir = gt_dir / "processed_remove_neighbours/data"
     test_list = query_dir / "list_query.txt"
-    corrs_dir = gt_dir / "processed_without_intrinsics/Corrs"
-    outputs_dir = gt_dir / "processed_without_intrinsics/hloc"
+    corrs_dir = gt_dir / "processed_remove_neighbours/Corrs"
+    outputs_dir = gt_dir / "processed_remove_neighbours/hloc"
 
+    results_log_dir = outputs_dir / "results.txt_logs.pkl"
     ref_sfm_retriangulated = outputs_dir / "sfm_superpoint+superglue"
     query_list = outputs_dir / "query_list_with_intrinsics.txt"
     sfm_pairs = outputs_dir / f"pairs-db-covis{num_covis}.txt"
@@ -177,7 +176,8 @@ def run_scene(gt_dir, results, num_covis, num_loc, num_remove_neighbours=5):
         prepend_camera_name=True,
     )
 
-    get_correspondences_all(ref_sfm_retriangulated, results, corrs_dir, query_info)
+    get_correspondences_all(ref_sfm_retriangulated, results_log_dir, corrs_dir, query_dir)
+
 
 def undistort_points_recalibrator(points2D, cam):
 
@@ -199,8 +199,8 @@ def undistort_points_recalibrator(points2D, cam):
 # get the correspondences
 def get_correspondences_all(ref_sfm_dir, log_dir, out_dir, query_dir):
 
-    if Path(out_dir) / f"CorrsDict.pkl".exists():
-        return
+    # if (out_dir / "CorrsDict.pkl").exists():
+    #     return
 
     # load sfm model
     reference_sfm = pycolmap.Reconstruction(ref_sfm_dir)
@@ -212,12 +212,10 @@ def get_correspondences_all(ref_sfm_dir, log_dir, out_dir, query_dir):
     # get the query images list
     query_imgs_list = list(logs['loc'].keys())
 
-
     # load gt pose
     with open(query_dir / "queryDict.pkl", 'rb') as f:
         gtPose = pickle.load(f)
         
-
     inliers_list = []
 
     CorrsDict = {}
@@ -243,14 +241,11 @@ def get_correspondences_all(ref_sfm_dir, log_dir, out_dir, query_dir):
 
         PnP_ret = logs['loc'][query_name]['PnP_ret']['cam_from_world']
 
-
         gtPose_img = gtPose[query_name]['Pose']
         Rgt = gtPose_img.rotation.matrix()
 
         # cam_trans = - np.matmul(cam_rot, cam_trans)
         tgt = gtPose_img.translation
-
-        print(f"nInliers: {inliers_array[-1]}")
 
         inliers_list.append(inliers_array)
 
@@ -272,11 +267,13 @@ def get_correspondences_all(ref_sfm_dir, log_dir, out_dir, query_dir):
             # error
             raise ValueError(f"Camera name not found in {query_name}")
         
-        points2D_undistorted = undistort_points_recalibrator(points2D, CorrsDict[query_name]['cam'])
+        points2D_undistorted, recalibrated_cam = undistort_points_recalibrator(points2D, CorrsDict[query_name]['cam'])
         CorrsDict[query_name]['points2D_undistorted'] = points2D_undistorted
+        CorrsDict[query_name]['recalibrated_focal_length'] = recalibrated_cam.focal()
 
     with open(Path(out_dir) / f"CorrsDict.pkl", 'wb') as f:
         pickle.dump(CorrsDict, f)
+    
 
 
 if __name__ == "__main__":
@@ -309,12 +306,13 @@ if __name__ == "__main__":
 
     gt_dirs = Path("/home2/xi5511zh/Xinyue/Datasets/Fisheye_FIORD")
 
-    # SCENES = ["sportunifront", "parakennus_out", "main_campus"]
-    SCENES = ["festia_out_corridor", "Kitchen_In", "meetingroom", "night_out", "outcorridor", "parakennus", "upstairs"]
+    # "festia_out_corridor", 
+    SCENES = ["sportunifront", "parakennus_out", "main_campus",
+              "Kitchen_In", "meetingroom", "night_out", "outcorridor", "parakennus", "upstairs"]
 
     # scene = SCENES[0]
     for scene in SCENES:
-        results = gt_dirs / scene / "processed_without_intrinsics/hloc/results.txt"
+        results = gt_dirs / scene / "processed_remove_neighbours/hloc/results.txt"
         results.parent.mkdir(exist_ok=True, parents=True)
 
         if args.overwrite or not results.exists():
@@ -332,6 +330,6 @@ if __name__ == "__main__":
         evaluate(
             gt_dirs / scene / "colmap/model",
             results,
-            gt_dirs / scene / "processed_without_intrinsics/data/list_query.txt",
+            gt_dirs / scene / "processed_remove_neighbours/data/list_query.txt",
             ext=".bin",
     )
