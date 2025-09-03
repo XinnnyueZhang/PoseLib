@@ -181,7 +181,9 @@ def run_scene(gt_dir, results, num_covis, num_loc, num_remove_neighbours=5):
 
 def undistort_points_recalibrator(points2D, cam):
 
-    points2D_unprojected = np.concatenate((cam.cam_from_img(points2D), np.ones((points2D.shape[0], 1))), axis=1)
+    points2D_unprojected = np.array(cam.cam_from_img(points2D))
+
+    points2D_unprojected = np.concatenate((points2D_unprojected, np.ones((points2D.shape[0], 1))), axis=1)
 
     openCVFisheyeCamera = poselib.Camera('OPENCV_FISHEYE', [cam.focal_length_x, cam.focal_length_y, 0, 0, 0, 0, 0, 0], cam.width, cam.height)
 
@@ -194,7 +196,7 @@ def undistort_points_recalibrator(points2D, cam):
 
     points2D_simplefisheye = recalibrated_cam.project(points2D_unprojected)
 
-    return np.array(points2D_simplefisheye), recalibrated_cam
+    return np.array(points2D_simplefisheye), recalibrated_cam, points2D_unprojected
 
 # get the correspondences
 def get_correspondences_all(ref_sfm_dir, log_dir, out_dir, query_dir):
@@ -267,7 +269,7 @@ def get_correspondences_all(ref_sfm_dir, log_dir, out_dir, query_dir):
             # error
             raise ValueError(f"Camera name not found in {query_name}")
         
-        points2D_undistorted, recalibrated_cam = undistort_points_recalibrator(points2D, CorrsDict[query_name]['cam'])
+        points2D_undistorted, recalibrated_cam, points2D_unprojected = undistort_points_recalibrator(points2D, CorrsDict[query_name]['cam'])
         CorrsDict[query_name]['points2D_undistorted'] = points2D_undistorted
         CorrsDict[query_name]['recalibrated_focal_length'] = recalibrated_cam.focal()
 

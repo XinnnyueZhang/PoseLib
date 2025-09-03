@@ -50,7 +50,10 @@ RansacStats ransac_pnp(const std::vector<Point2D> &x, const std::vector<Point3D>
     best_model->q << 1.0, 0.0, 0.0, 0.0;
     best_model->t.setZero();
     AbsolutePoseEstimator estimator(opt, x, X);
+    auto start_time = std::chrono::high_resolution_clock::now();
     RansacStats stats = ransac<AbsolutePoseEstimator>(estimator, opt.ransac, best_model);
+    auto end_time = std::chrono::high_resolution_clock::now();
+    stats.runtime = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
 
     get_inliers(*best_model, x, X, opt.max_error * opt.max_error, best_inliers);
 
@@ -68,7 +71,11 @@ RansacStats ransac_pnpf(const std::vector<Point2D> &x, const std::vector<Point3D
     best_model->camera.params = {1.0, 0.0, 0.0};
 
     FocalAbsolutePoseEstimator estimator(opt, x, X);
+
+    auto start_time = std::chrono::high_resolution_clock::now();
     RansacStats stats = ransac<FocalAbsolutePoseEstimator>(estimator, opt.ransac, best_model);
+    auto end_time = std::chrono::high_resolution_clock::now();
+    stats.runtime = std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count();
 
     get_inliers(*best_model, x, X, opt.max_error * opt.max_error, best_inliers);
 
