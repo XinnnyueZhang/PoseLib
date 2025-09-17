@@ -1,6 +1,7 @@
 #include "PoseLib/solvers/p4pf_fisheye.h"
 #include "PoseLib/solvers/p4pfr.h"
 #include "PoseLib/solvers/p4pf_fisheye_depth.h"
+#include "PoseLib/solvers/p5pfr.h"
 #include <PoseLib/robust/optim/absolute.h>
 #include <PoseLib/robust/optim/lm_impl.h>
 
@@ -337,4 +338,78 @@ namespace poselib {
 
         return nSols;
     }
+
+
+    int p5pfr_fisheye(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X,
+        CameraPoseVector *solutions, std::vector<double> *focals) {
+        std::vector<double> ks;
+        return p5pfr(x, X, solutions, focals, &ks);
+    }
+
+    int p5pfr_lm_fisheye(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X,
+            CameraPoseVector *solutions, std::vector<double> *focals) {
+
+        CameraPoseVector solutions_p5pfr;
+        std::vector<double> focals_p5pfr;
+        std::vector<double> ks;
+        int nSols_p5pfr = p5pfr(x, X, &solutions_p5pfr, &focals_p5pfr, &ks);
+
+        if (nSols_p5pfr == 0) {
+            return 0;
+        }
+
+        // LM refine
+        int nSols_LM = 0;
+        for (int i = 0; i < nSols_p5pfr; i++) {
+            if (is_valid_fisheye(x, X, solutions_p5pfr[i], focals_p5pfr[i], 1e-2)){
+
+                CameraPose pose_initial = solutions_p5pfr[i];
+                Camera camera_initial;
+                camera_initial.model_id = 12;
+                camera_initial.params = {focals_p5pfr[i], 0.0, 0.0};
+                Image Img_initial(pose_initial, camera_initial);
+
+                BundleOptions bundle_opt;
+                // bundle_opt.step_tol = 1e-12;
+                bundle_opt.refine_focal_length = true;
+                std::vector<size_t> camera_refine_idx = Img_initial.camera.get_param_refinement_idx(bundle_opt);
+
+                AbsolutePoseRefiner<> refiner(x, X, camera_refine_idx);
+                lm_impl<decltype(refiner)>(refiner, &Img_initial, bundle_opt);
+
+                solutions->push_back(Img_initial.pose);
+                focals->push_back(Img_initial.camera.params[0]);
+                    nSols_LM++;
+            }
+            else {
+                continue;
+            }
+        }
+        return nSols_LM;
+    }
+
+
+    int p3p_fisheye_givenf(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X, double focal_initial,
+                     CameraPoseVector *solutions, std::vector<double> *focals) {
+
+        Camera camera;
+        camera.model_id = 12;
+        camera.params = {focal_initial, 0.0, 0.0};
+
+        std::vector<Eigen::Vector3d> x_fisheye_normalized(3);
+        for (int i = 0; i < 3; i++) {
+            camera.unproject(x[i], &x_fisheye_normalized[i]);
+        }
+
+        CameraPoseVector solutions_p3p;
+        int nSols_p3p = p3p_ding(x_fisheye_normalized, X, &solutions_p3p);
+        
+        for (int j = 0; j < nSols_p3p; j++) {
+            solutions->push_back(solutions_p3p[j]);
+            focals->push_back(focal_initial);
+        }
+
+        return nSols_p3p;
+    }
+
 }

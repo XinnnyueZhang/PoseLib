@@ -344,23 +344,23 @@ int main(int argc, char** argv) {
     options.camera_fov_ = fov;
     double tol = 1e-6;
 
-    // Sampling + p3p
-    poselib::ProblemOptions fisheye_3pts_opt = options;
-    fisheye_3pts_opt.n_point_point_ = 3;
-    fisheye_3pts_opt.unknown_focal_ = true;
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P3P>(1e4, fisheye_3pts_opt, tol*1e4));
+    // // Sampling + p3p
+    // poselib::ProblemOptions fisheye_3pts_opt = options;
+    // fisheye_3pts_opt.n_point_point_ = 3;
+    // fisheye_3pts_opt.unknown_focal_ = true;
+    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P3P>(1e4, fisheye_3pts_opt, tol*1e4));
 
-    // NEW for Fisheye camera resectioning with unknown focal
-    poselib::ProblemOptions fisheye_4pts_opt = options;
-    fisheye_4pts_opt.n_point_point_ = 4;
-    fisheye_4pts_opt.unknown_focal_ = true;
+    // // NEW for Fisheye camera resectioning with unknown focal
+    // poselib::ProblemOptions fisheye_4pts_opt = options;
+    // fisheye_4pts_opt.n_point_point_ = 4;
+    // fisheye_4pts_opt.unknown_focal_ = true;
 
-    // Sampling + p3p
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P3P_focal_LM>(1e4, fisheye_4pts_opt, tol*1e4));
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P3P_fov_LM>(1e4, fisheye_4pts_opt, tol*1e4));
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P3P_HC>(1e4, fisheye_4pts_opt, tol*1e4));
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P3P_focal_all_LM>(1e4, fisheye_4pts_opt, tol*1e4));
-    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P3P_fov_all_LM>(1e4, fisheye_4pts_opt, tol*1e4));
+    // // Sampling + p3p
+    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P3P_focal_LM>(1e4, fisheye_4pts_opt, tol*1e4));
+    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P3P_fov_LM>(1e4, fisheye_4pts_opt, tol*1e4));
+    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P3P_HC>(1e4, fisheye_4pts_opt, tol*1e4));
+    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P3P_focal_all_LM>(1e4, fisheye_4pts_opt, tol*1e4));
+    // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P3P_fov_all_LM>(1e4, fisheye_4pts_opt, tol*1e4));
 
     // // p4pfr
     // // p4pfr + no refiner
@@ -378,6 +378,21 @@ int main(int argc, char** argv) {
     // // p4pfr as initial + HC depth refiner
     // results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P4PFr_HC_depth>(1e4, fisheye_4pts_opt, tol*1e4));
 
+
+    // NEW for Fisheye camera resectioning with unknown focal
+    poselib::ProblemOptions fisheye_5pts_opt = options;
+    fisheye_5pts_opt.n_point_point_ = 5;
+    fisheye_5pts_opt.unknown_focal_ = true;
+
+    // p5pfr
+    // p5pfr + no refiner
+    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P5PFr>(1e4, fisheye_5pts_opt, tol*1e4));
+
+    // p5pfr + LM refiner
+    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P5PFr_LM>(1e4, fisheye_5pts_opt, tol*1e4));
+
+    // p5pfr as initial + HC pose refiner
+    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P5PFr_HC_pose>(1e4, fisheye_5pts_opt, tol*1e4));
 
     // // p3.5pf
     // // p3.5pf + no refiner

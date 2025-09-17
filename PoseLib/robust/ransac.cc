@@ -85,7 +85,7 @@ RansacStats ransac_pnpf(const std::vector<Point2D> &x, const std::vector<Point3D
 
 // NEW: Fisheye absolute pose and focal length estimation   
 RansacStats ransac_pnpf_fisheye(const std::vector<Point2D> &x, const std::vector<Point3D> &X, const double image_size, 
-    const AbsolutePoseOptions &opt, Image *best_model, std::vector<char> *best_inliers) {
+    const double focal_initial, const AbsolutePoseOptions &opt, Image *best_model, std::vector<char> *best_inliers) {
 
     best_model->pose.q << 1.0, 0.0, 0.0, 0.0;
     best_model->pose.t.setZero();
@@ -108,12 +108,18 @@ RansacStats ransac_pnpf_fisheye(const std::vector<Point2D> &x, const std::vector
         chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P3P_sampling_LM;
     } else if (opt.minimal_solver == "P3P_sampling_HC") {
         chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P3P_sampling_HC;
+    } else if (opt.minimal_solver == "P5Pfr") {
+        chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P5Pfr;
+    } else if (opt.minimal_solver == "P5Pfr_LM") {
+        chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P5Pfr_LM;
+    } else if (opt.minimal_solver == "P3P_givenf") {
+        chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P3P_givenf;
     } else {
         std::cout << "Invalid minimal solver: " << opt.minimal_solver << std::endl;
         return RansacStats(); // Exit if solver is invalid
     }
 
-    FisheyeFocalAbsolutePoseEstimator estimator(opt, x, X, chosen_solver, image_size);
+    FisheyeFocalAbsolutePoseEstimator estimator(opt, x, X, chosen_solver, image_size, focal_initial);
 
     auto start_time = std::chrono::high_resolution_clock::now();
     RansacStats stats = ransac<FisheyeFocalAbsolutePoseEstimator>(estimator, opt.ransac, best_model);

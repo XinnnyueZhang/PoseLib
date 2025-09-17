@@ -1,1 +1,0 @@
-Loaded SuperGlue model ("outdoor" weights)

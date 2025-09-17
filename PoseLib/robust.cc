@@ -117,15 +117,17 @@ RansacStats estimate_absolute_pose_fisheye(const std::vector<Point2D> &points2D,
                                    AbsolutePoseOptions opt, Image *image, std::vector<char> *inliers) {
     AbsolutePoseOptions opt_scaled = opt;
 
-    double scale = 1.0 / image->camera.focal();
+    // double scale = 1.0 / image->camera.focal();
+    double scale = 1.0;
     opt_scaled.max_error *= scale;
 
     double image_size = std::max(image->camera.width, image->camera.height);
 
     RansacStats stats;
     if (opt.estimate_focal_length && !opt.estimate_extra_params) {
+        double focal_initial = image->camera.focal();
         Image img;
-        stats = ransac_pnpf_fisheye(points2D, points3D, image_size, opt_scaled, &img, inliers);
+        stats = ransac_pnpf_fisheye(points2D, points3D, image_size, focal_initial, opt_scaled, &img, inliers);
         image->pose = img.pose;
         image->camera.set_focal(img.camera.focal() / scale);
         opt_scaled.bundle.refine_focal_length = true; // force refinement of focal in this case

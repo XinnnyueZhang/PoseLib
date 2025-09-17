@@ -10,6 +10,7 @@ set(SOURCES
     solvers/p3p_ding.cc
     solvers/p4pf.cc
     solvers/p4pfr.cc
+    solvers/p5pfr.cc
     solvers/p4pf_fisheye.cc
     solvers/p4pf_fisheye_depth.cc
     solvers/p35pf.cc
@@ -72,6 +73,7 @@ set(HEADERS_PUBLIC
     solvers/p3p_ding.h
     solvers/p4pf.h
     solvers/p4pfr.h
+    solvers/p5pfr.h
     solvers/p4pf_fisheye.h
     solvers/p4pf_fisheye_depth.h
     solvers/p35pf.h

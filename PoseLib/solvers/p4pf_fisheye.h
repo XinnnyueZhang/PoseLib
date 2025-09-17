@@ -39,6 +39,16 @@ namespace poselib {
      int p3p_fisheye_hc(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X, 
                         const double image_size, CameraPoseVector *solutions, std::vector<double> *focals);
 
+     // NEW: p5pfr
+     int p5pfr_fisheye(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X,
+                        CameraPoseVector *solutions, std::vector<double> *focals);
+
+     int p5pfr_lm_fisheye(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X,
+                        CameraPoseVector *solutions, std::vector<double> *focals);
+
+     // with gt or predicted focal length as input
+     int p3p_fisheye_givenf(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X, double focal_initial,
+                     CameraPoseVector *solutions, std::vector<double> *focals);
 
 }
 
