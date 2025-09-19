@@ -30,6 +30,7 @@
 #include "robust/recalibrator.h"
 
 #include "PoseLib/robust/utils.h"
+#include <iostream>
 
 namespace poselib {
 
@@ -38,8 +39,12 @@ RansacStats estimate_absolute_pose(const std::vector<Point2D> &points2D, const s
     AbsolutePoseOptions opt_scaled = opt;
 
     std::vector<Point2D> points2D_norm(points2D.size());
-    for (size_t k = 0; k < points2D.size(); ++k) {
-        image->camera.unproject(points2D[k], &points2D_norm[k]);
+    if(image->camera.model_id == CameraModelId::SIMPLE_FISHEYE) {
+        points2D_norm = points2D;
+    } else {
+        for (size_t k = 0; k < points2D.size(); ++k) {
+            image->camera.unproject(points2D[k], &points2D_norm[k]);
+        }    
     }
 
     double scale = 1.0 / image->camera.focal();

@@ -174,7 +174,6 @@ def run_scene(gt_dir, results, num_covis, num_loc, nSample=50, remove_covisibilt
     sfm_matches = match_features.main(
         matcher_conf, sfm_pairs, features, outputs_dir
     )
-
     # Triangulate 3D points from known camera poses
     triangulation.main(
         ref_sfm_retriangulated, ref_sfm, images, sfm_pairs, features, sfm_matches
@@ -265,7 +264,6 @@ def get_correspondences_all(ref_sfm_dir, log_dir, out_dir, query_dir):
         gtPose_img = gtPose[query_name]['Pose']
         Rgt = gtPose_img.rotation.matrix()
 
-        # cam_trans = - np.matmul(cam_rot, cam_trans)
         tgt = gtPose_img.translation
 
         inliers_list.append(inliers_array)
@@ -362,8 +360,8 @@ if __name__ == "__main__":
     results = gt_dirs / scene / f"processed_covisible{args.num_remove_covisibilty}/hloc/results.txt"
     results.parent.mkdir(exist_ok=True, parents=True)
 
-    if args.overwrite or not results.exists():
-    # if True:
+    # if args.overwrite or not results.exists():
+    if True:
         run_scene(
             gt_dirs / scene,
             results,
