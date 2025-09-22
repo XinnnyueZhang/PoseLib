@@ -44,18 +44,18 @@ def runp3p(CorrsDict, query_name, threshold = 10):
 
     Corrs = CorrsDict[query_name]
 
-    simplefisheye_cam = poselib.Camera('SIMPLE_FISHEYE', [Corrs['recalibrated_focal_length'], 0, 0], Corrs['cam'].width, Corrs['cam'].height)
-    points2D_unprojected = simplefisheye_cam.unproject(Corrs['points2D_undistorted'])
-    points2D_unprojected = np.array(points2D_unprojected)
+    # simplefisheye_cam = poselib.Camera('SIMPLE_FISHEYE', [Corrs['recalibrated_focal_length'], 0, 0], Corrs['cam'].width, Corrs['cam'].height)
+    # points2D_unprojected = simplefisheye_cam.unproject(Corrs['points2D_undistorted'])
+    # points2D_unprojected = np.array(points2D_unprojected)
 
-    points2D_unprojected = points2D_unprojected[:,:2]/points2D_unprojected[:,2:3]
+    # points2D_unprojected = points2D_unprojected[:,:2]/points2D_unprojected[:,2:3]
 
 
     opt = {'estimate_focal_length': False, 'estimate_extra_params': False, 'max_error': threshold, 
            'ransac': {'min_iterations': 100, 'max_iterations': 2000},
             'bundle': {'verbose': False, 'loss_scale': threshold}}
-    camera_dict = {'model': 'SIMPLE_PINHOLE', 'width': Corrs['cam'].width, 'height': Corrs['cam'].height, 'params': [1.0, 0, 0]}
-    pose, info = poselib.estimate_absolute_pose(points2D_unprojected, Corrs['points3D'], camera_dict, opt)
+    camera_dict = {'model': 'SIMPLE_FISHEYE', 'width': Corrs['cam'].width, 'height': Corrs['cam'].height, 'params': [Corrs['recalibrated_focal_length'], 0, 0]}
+    pose, info = poselib.estimate_absolute_pose(Corrs['points2D_undistorted'], Corrs['points3D'], camera_dict, opt)
 
     pnpf_R, pnpf_q, pnpf_t = pose.pose.R, pose.pose.q, pose.pose.t
 
@@ -231,8 +231,8 @@ if __name__ == "__main__":
         with open(results_file, 'wb') as f:
             pickle.dump(Errors_np, f)
 
-        with open(results_file.parent / f'RANSACresults_pd.pkl', 'wb') as f:
+        with open(results_file.parent / f'RANSACresults_{args.threshold}_pd.pkl', 'wb') as f:
             pickle.dump(Errors_pd, f)
 
-        with open(results_file.parent / f'RANSACresults_dict.pkl', 'wb') as f:
+        with open(results_file.parent / f'RANSACresults_{args.threshold}_dict.pkl', 'wb') as f:
             pickle.dump(Errors_dict, f)
