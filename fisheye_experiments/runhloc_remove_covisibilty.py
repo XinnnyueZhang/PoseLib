@@ -151,8 +151,10 @@ def run_scene(gt_dir, results, num_covis, num_loc, nSample=50, remove_covisibilt
     retrieval_conf = extract_features.confs["netvlad"]
 
 
+    # with open(test_list, "r") as f:
+    #     query_seqs = {q.split("/")[0] for q in f.read().rstrip().split("\n")}
     with open(test_list, "r") as f:
-        query_seqs = {q.split("/")[0] for q in f.read().rstrip().split("\n")}
+        query_seqs = f.read().rstrip().split("\n")
 
     global_descriptors = extract_features.main(retrieval_conf, images, outputs_dir)
 
@@ -161,7 +163,8 @@ def run_scene(gt_dir, results, num_covis, num_loc, nSample=50, remove_covisibilt
         loc_pairs,
         num_loc,
         db_model=ref_sfm,
-        query_prefix=query_seqs,
+        query_list=query_seqs,
+        # query_prefix=query_seqs,
     )
 
     # use previous superpoint features
@@ -170,14 +173,15 @@ def run_scene(gt_dir, results, num_covis, num_loc, nSample=50, remove_covisibilt
     features = extract_features.main(feature_conf, images, outputs_dir, as_half=True, feature_path=feature_dir)
 
 
-    pairs_from_covisibility.main(ref_sfm, sfm_pairs, num_matched=num_covis)
-    sfm_matches = match_features.main(
-        matcher_conf, sfm_pairs, features, outputs_dir
-    )
-    # Triangulate 3D points from known camera poses
-    triangulation.main(
-        ref_sfm_retriangulated, ref_sfm, images, sfm_pairs, features, sfm_matches
-    )
+    if not ref_sfm_retriangulated.exists():
+        pairs_from_covisibility.main(ref_sfm, sfm_pairs, num_matched=num_covis)
+        sfm_matches = match_features.main(
+            matcher_conf, sfm_pairs, features, outputs_dir
+        )
+        # Triangulate 3D points from known camera poses
+        triangulation.main(
+            ref_sfm_retriangulated, ref_sfm, images, sfm_pairs, features, sfm_matches
+        )
 
     loc_matches = match_features.main(
         matcher_conf, loc_pairs, features, outputs_dir
@@ -349,34 +353,34 @@ if __name__ == "__main__":
 
     gt_dirs = Path("/home2/xi5511zh/Xinyue/Datasets/Fisheye_FIORD")
 
-    SCENES = ["festia_out_corridor", "sportunifront", "parakennus_out", "main_campus",
+    SCENES = ["sportunifront", "parakennus_out", "main_campus",
               "Kitchen_In", "meetingroom", "night_out", "outcorridor", "parakennus", "upstairs"]
-
+    # "festia_out_corridor", 
     # sample 30 frames from [2,4,5,6,7,8]
     # sample 50 frames from [0,1,3]
 
     scene = SCENES[args.sceneID]
-    # for scene in SCENES:
-    results = gt_dirs / scene / f"processed_covisible{args.num_remove_covisibilty}/hloc/results.txt"
-    results.parent.mkdir(exist_ok=True, parents=True)
+    for scene in SCENES:
+        results = gt_dirs / scene / f"processed_covisible{args.num_remove_covisibilty}/hloc/results.txt"
+        results.parent.mkdir(exist_ok=True, parents=True)
 
-    # if args.overwrite or not results.exists():
-    if True:
-        run_scene(
-            gt_dirs / scene,
+        # if args.overwrite or not results.exists():
+        if True:
+            run_scene(
+                gt_dirs / scene,
+                results,
+                args.num_covis,
+                args.num_loc,
+                args.nSample,
+                args.num_remove_covisibilty,
+                args.camera,
+            )
+            
+
+        logger.info(f'Evaluate scene "{scene}".')
+        evaluate(
+            gt_dirs / scene / "colmap/model",
             results,
-            args.num_covis,
-            args.num_loc,
-            args.nSample,
-            args.num_remove_covisibilty,
-            args.camera,
+            gt_dirs / scene / f"processed_covisible{args.num_remove_covisibilty}/data/list_query.txt",
+            ext=".bin",
         )
-        
-
-    logger.info(f'Evaluate scene "{scene}".')
-    evaluate(
-        gt_dirs / scene / "colmap/model",
-        results,
-        gt_dirs / scene / f"processed_covisible{args.num_remove_covisibilty}/data/list_query.txt",
-        ext=".bin",
-    )
