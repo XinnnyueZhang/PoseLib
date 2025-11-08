@@ -79,7 +79,7 @@ setup(
     author_email="viktor.larsson@math.lth.se",
     description="",
     long_description="",
-    ext_modules=[CMakeExtension("pyposelib")],
+    ext_modules=[CMakeExtension("poselib")],
     cmdclass={"build_ext": CMakeBuild},
     zip_safe=False,
 )

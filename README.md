@@ -80,7 +80,7 @@ The python bindings can be installed by running `pip install .`. The python bind
 
 For developing the code and build faster
 ```bash
-pip install -e .
+python -m pip install -e .
 python setup.py build_ext --inplace
 ```
 

@@ -1,1 +1,1 @@
-pyposelib
+poselib

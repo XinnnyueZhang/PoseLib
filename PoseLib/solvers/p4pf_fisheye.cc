@@ -64,27 +64,47 @@ namespace poselib {
         if (focal < 0)
             return false;
     
-        // lambda*[tan(theta) x/rd; 1] = R*X + t
-        for (int i = 0; i < x.size(); ++i) {
-            double rd = std::sqrt(x[i](0) * x[i](0) + x[i](1) * x[i](1));
-            double theta = rd / focal;
-            Eigen::Vector3d x_fisheye = Eigen::Vector3d{x[i](0) / rd * std::tan(theta), x[i](1) / rd * std::tan(theta), 1.0};
-            double inner_product = (x_fisheye).normalized().dot((pose.R() * X[i] + pose.t).normalized());
-            if (inner_product < 0) {
-                return false;
-            }
-            double err = 1.0 - std::abs(inner_product);
-            if (err > tol)
-                return false;
-        }
+        // // lambda*[tan(theta) x/rd; 1] = R*X + t
+        // for (int i = 0; i < x.size(); ++i) {
+        //     double rd = std::sqrt(x[i](0) * x[i](0) + x[i](1) * x[i](1));
+        //     double theta = rd / focal;
+        //     Eigen::Vector3d x_fisheye = Eigen::Vector3d{x[i](0) / rd * std::tan(theta), x[i](1) / rd * std::tan(theta), 1.0};
+        //     double inner_product = (x_fisheye).normalized().dot((pose.R() * X[i] + pose.t).normalized());
+        //     if (inner_product < 0) {
+        //         return false;
+        //     }
+        //     // double err = 1.0 - std::abs(inner_product);
+        //     // if (err > tol)
+        //     //     return false;
+        // }
 
         return true;
     }
 
+    // int p4pfr_fisheye(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X,
+    //                  CameraPoseVector *solutions, std::vector<double> *focals) {
+    //     std::vector<double> ks;
+    //     return p4pfr(x, X, solutions, focals, &ks);
+    // }
+
     int p4pfr_fisheye(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X,
-                     CameraPoseVector *solutions, std::vector<double> *focals) {
+        CameraPoseVector *solutions, std::vector<double> *focals) {
         std::vector<double> ks;
-        return p4pfr(x, X, solutions, focals, &ks);
+        std::vector<CameraPose> poses_p4pfr;
+        std::vector<double> focals_p4pfr;
+        int nSols_p4pfr = p4pfr(x, X, &poses_p4pfr, &focals_p4pfr, &ks);
+        if (nSols_p4pfr == 0) {
+            return 0;
+        }
+        int nSols = 0;
+        for (int i = 0; i < nSols_p4pfr; i++) {
+            if (is_valid_fisheye(x, X, poses_p4pfr[i], focals_p4pfr[i], 1e-2)){
+                solutions->push_back(poses_p4pfr[i]);
+                focals->push_back(focals_p4pfr[i]);
+                nSols++;
+            }
+        }
+        return nSols;
     }
     
     int p4pfr_lm_fisheye(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X,
@@ -340,10 +360,31 @@ namespace poselib {
     }
 
 
+    // int p5pfr_fisheye(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X,
+    //     CameraPoseVector *solutions, std::vector<double> *focals) {
+    //     std::vector<double> ks;
+    //     return p5pfr(x, X, solutions, focals, &ks);
+    // }
+
     int p5pfr_fisheye(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X,
         CameraPoseVector *solutions, std::vector<double> *focals) {
+        // check the solutions are valid
         std::vector<double> ks;
-        return p5pfr(x, X, solutions, focals, &ks);
+        std::vector<CameraPose> poses_p5pfr;
+        std::vector<double> focals_p5pfr;
+        int nSols_p5pfr = p5pfr(x, X, &poses_p5pfr, &focals_p5pfr, &ks);
+        if (nSols_p5pfr == 0) {
+            return 0;
+        }
+        int nSols = 0;
+        for (int i = 0; i < nSols_p5pfr; i++) {
+            if (is_valid_fisheye(x, X, poses_p5pfr[i], focals_p5pfr[i], 1e-2)){
+                solutions->push_back(poses_p5pfr[i]);
+                focals->push_back(focals_p5pfr[i]);
+                nSols++;
+            }
+        }
+        return nSols;
     }
 
     int p5pfr_lm_fisheye(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X,

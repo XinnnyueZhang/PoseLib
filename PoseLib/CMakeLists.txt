@@ -15,6 +15,7 @@ set(SOURCES
     solvers/p4pf_fisheye_depth.cc
     solvers/p35pf.cc
     solvers/p5pf.cc
+    solvers/p5pf_fisheye.cc
     solvers/p5pfr.cc
     solvers/p5lp_radial.cc
     solvers/p6lp.cc
@@ -74,6 +75,7 @@ set(HEADERS_PUBLIC
     solvers/p4pf.h
     solvers/p4pfr.h
     solvers/p5pfr.h
+    solvers/p5pf_fisheye.h
     solvers/p4pf_fisheye.h
     solvers/p4pf_fisheye_depth.h
     solvers/p35pf.h

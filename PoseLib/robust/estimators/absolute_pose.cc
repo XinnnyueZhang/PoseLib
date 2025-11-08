@@ -39,10 +39,13 @@
 #include "PoseLib/solvers/p5lp_radial.h"
 #include "PoseLib/solvers/p5pf.h"
 #include "PoseLib/solvers/p5pfr.h"
+#include "PoseLib/solvers/p5pf_fisheye.h"
 
 #include "PoseLib/solvers/p4pfr.h"
 #include "PoseLib/solvers/p4pf_fisheye.h"
 #include <iostream>
+
+#include <chrono>
 
 namespace poselib {
 
@@ -199,6 +202,8 @@ void FisheyeFocalAbsolutePoseEstimator::generate_models(std::vector<Image> *mode
         p5pfr_lm_fisheye(xs, Xs, &poses, &focals);
     } else if (minimal_solver == Solver::P3P_givenf) {
         p3p_fisheye_givenf(xs, Xs, focal_initial, &poses, &focals);
+    } else if (minimal_solver == Solver::P5Pf_fisheye) {
+        p5pf_fisheye(xs, Xs, &poses, &focals, true);
     } else { 
         // output error
         std::cerr << "FisheyeFocalAbsolutePoseEstimator: Unsupported solver" << std::endl;
@@ -246,6 +251,7 @@ void FisheyeFocalAbsolutePoseEstimator::generate_models(std::vector<Image> *mode
 }
 
 double FisheyeFocalAbsolutePoseEstimator::score_model(const Image &image, size_t *inlier_count) const {
+    
     double score = compute_msac_score(image, x, X, opt.max_error * opt.max_error, inlier_count);
     
     if (inlier_scoring) {
@@ -256,6 +262,7 @@ double FisheyeFocalAbsolutePoseEstimator::score_model(const Image &image, size_t
     if (max_focal_length >= 0 && image.camera.focal() > max_focal_length) {
         score = std::numeric_limits<double>::max();
     }
+    
     return score;
 }
 

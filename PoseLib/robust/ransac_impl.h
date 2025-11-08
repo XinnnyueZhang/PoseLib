@@ -33,6 +33,9 @@
 
 #include <vector>
 
+#include <chrono>
+#include <iostream>
+
 namespace poselib {
 
 // Templated LO-RANSAC implementation (inspired by RansacLib from Torsten Sattler)
@@ -62,7 +65,7 @@ RansacStats ransac(Solver &estimator, const RansacOptions &opt, Model *best_mode
         }
         models.clear();
         estimator.generate_models(&models);
-
+        
         // Find best model among candidates
         int best_model_ind = -1;
         for (size_t i = 0; i < models.size(); ++i) {
@@ -87,7 +90,6 @@ RansacStats ransac(Solver &estimator, const RansacOptions &opt, Model *best_mode
                 }
             }
         }
-
         if (best_model_ind == -1)
             continue;
 

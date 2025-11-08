@@ -1,5 +1,5 @@
 #include "p4pfr.h"
-
+#include <iostream>
 
 static const double SMALL_NUMBER = 1e-8;
 
@@ -389,6 +389,9 @@ std::vector<double> *output_focals, std::vector<double> *output_ks) {
 
 		Eigen::Matrix<double, 3, 4> P;
 		double lambda = sols(3, i).real();
+		if (std::isnan(lambda)) {
+			continue;
+		}
 		Eigen::Vector4d alpha;
 		alpha << sols(0, i).real(), sols(1, i).real(), sols(2, i).real(), 1.0;		
 		Eigen::Matrix<double, 8, 1> P12 = N * alpha;
