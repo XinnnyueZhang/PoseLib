@@ -44,6 +44,9 @@ namespace poselib {
 int p5pf_fisheye(const std::vector<Eigen::Vector2d> &points2d, const std::vector<Eigen::Vector3d> &points3d,
          std::vector<CameraPose> *output_poses, std::vector<double> *output_focals, bool normalize_input = false);
 
+int p5pf_fisheye_lm(const std::vector<Eigen::Vector2d> &points2d, const std::vector<Eigen::Vector3d> &points3d,
+    std::vector<CameraPose> *output_poses, std::vector<double> *output_focals);
+   
 } // namespace poselib
 
 #endif

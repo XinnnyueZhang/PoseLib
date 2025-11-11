@@ -81,7 +81,7 @@ The python bindings can be installed by running `pip install .`. The python bind
 For developing the code and build faster
 ```bash
 python -m pip install -e .
-python setup.py build_ext --inplace
+python setup.py build_ext --inplace build --build-base build_xxx -j8
 ```
 
 Examples of how the robust estimators can be called are

@@ -90,46 +90,26 @@ struct BundleStats {
     double grad_norm;
 };
 
-
+// New: add HCOptions
 struct HCOptions {
     // Homotopy is parameterized on t in [0, target_time]
-    double step_size      = 0.05;
-    double target_time    = 1.0;
-    double min_step_size  = 1e-3;
-    double max_step_size  = 0.15;
-
-    // Step size scale factors (used with success counters & failures)
-    double step_grow      = 2.0;   // factor when we decide to grow
-    double step_shrink    = 0.5;   // factor when we shrink on failure
+    double step_size = 0.05;
+    double target_time = 1.0;
+    double min_step_size = 1e-3;
+    double max_step_size = 0.15;
+    double step_grow = 1.5;
+    double step_shrink = 0.5;
     size_t max_step_halvings = 6;
-
-    // Number of consecutive good steps before we grow step
-    size_t step_grow_after = 3;    // like HC_delta_t_incremental_steps on GPU
-
-    // End-zone near target_time, where we clamp the last part of the path
-    double end_zone_width = 0.05;  // last 5% of the path treated carefully
-
-    // Predictor controls
-    double predictor_max_update  = std::numeric_limits<double>::infinity();
+    double predictor_max_update = std::numeric_limits<double>::infinity();
     double predictor_small_update = 1e-3;
-
-    // Newton controls
-    double newton_tol          = 1e-8;
-    double newton_max_update   = 1.0;
+    double newton_tol = 1e-8;
+    double newton_max_update = 1.0;
     double newton_max_residual = 5e-3;
-    size_t newton_iter         = 5;
-
-    // Relative Newton stopping: dx^2 < newton_rel_tol * ||x||^2
-    double newton_rel_tol      = 1e-6;
-
-    // Max outer iterations (default heuristic)
     size_t max_iterations = static_cast<size_t>(target_time / step_size) + 5;
-
-    // Predictor & solver behaviour
-    bool forth_predictor = true;   // RK4 predictor if true, Euler if false
-    bool adaptive_flag   = true;   // use LU/QR instead of explicit normal equations
-
-    bool debug_output    = false;  // Control debugging output
+    size_t newton_iter = 5;
+    bool forth_predictor = true;
+    bool adaptive_flag = true;
+    bool debug_output = false;  // Control debugging output
 };
 
 // New: add HCStats

@@ -62,6 +62,7 @@ class HCProblemBase2 {
 public:
 
     typedef Eigen::Matrix<double, num_params, 1> dX_t;
+    typedef Eigen::Matrix<double, num_params, 1> sol_t;
     typedef Eigen::Matrix<double, num_polys, 1> poly_t;
     typedef Eigen::Matrix<double, num_polys, num_params> jacobian_t;
 

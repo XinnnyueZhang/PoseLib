@@ -116,6 +116,14 @@ RansacStats ransac_pnpf_fisheye(const std::vector<Point2D> &x, const std::vector
         chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P3P_givenf;
     } else if (opt.minimal_solver == "P5Pf_fisheye") {
         chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P5Pf_fisheye;
+    } else if (opt.minimal_solver == "P5Pf_LM") {
+        chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P5Pf_LM;
+    } else if (opt.minimal_solver == "P5Pf") {
+        chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P5Pf;
+    } else if (opt.minimal_solver == "P35Pf") {
+        chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P35Pf;
+    } else if (opt.minimal_solver == "P35Pf_LM") {
+        chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P35Pf_LM;
     } else {
         std::cout << "Invalid minimal solver: " << opt.minimal_solver << std::endl;
         return RansacStats(); // Exit if solver is invalid

@@ -203,7 +203,15 @@ void FisheyeFocalAbsolutePoseEstimator::generate_models(std::vector<Image> *mode
     } else if (minimal_solver == Solver::P3P_givenf) {
         p3p_fisheye_givenf(xs, Xs, focal_initial, &poses, &focals);
     } else if (minimal_solver == Solver::P5Pf_fisheye) {
-        p5pf_fisheye(xs, Xs, &poses, &focals, true);
+        p5pf_fisheye(xs, Xs, &poses, &focals, false);
+    } else if (minimal_solver == Solver::P35Pf) {
+        p35pf_fisheye(xs, Xs, &poses, &focals);
+    } else if (minimal_solver == Solver::P35Pf_LM) {
+        p35pf_lm_fisheye(xs, Xs, &poses, &focals);
+    } else if (minimal_solver == Solver::P5Pf) {
+        p5pf_orgin_fisheye(xs, Xs, &poses, &focals);
+    } else if (minimal_solver == Solver::P5Pf_LM) {
+        p5pf_fisheye_lm(xs, Xs, &poses, &focals);
     } else { 
         // output error
         std::cerr << "FisheyeFocalAbsolutePoseEstimator: Unsupported solver" << std::endl;

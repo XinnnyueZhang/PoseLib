@@ -1,6 +1,7 @@
 #ifndef POSELIB_HOMOTOPY_CONTINUATION_H_
 #define POSELIB_HOMOTOPY_CONTINUATION_H_
 
+
 #include "PoseLib/types.h"
 #include "PoseLib/HCsolvers/HCproblems/helper.h"
 
@@ -12,57 +13,11 @@
 
 namespace poselib {
 
-// -----------------------------------------------------------------------------
-// HCOptions
-// -----------------------------------------------------------------------------
-
-// struct HCOptions {
-//     // Homotopy is parameterized on t in [0, target_time]
-//     double step_size      = 0.05;
-//     double target_time    = 1.0;
-//     double min_step_size  = 1e-3;
-//     double max_step_size  = 0.15;
-
-//     // Step size scale factors (used with success counters & failures)
-//     double step_grow      = 2.0;   // factor when we decide to grow
-//     double step_shrink    = 0.5;   // factor when we shrink on failure
-//     size_t max_step_halvings = 6;
-
-//     // Number of consecutive good steps before we grow step
-//     size_t step_grow_after = 3;    // like HC_delta_t_incremental_steps on GPU
-
-//     // End-zone near target_time, where we clamp the last part of the path
-//     double end_zone_width = 0.05;  // last 5% of the path treated carefully
-
-//     // Predictor controls
-//     double predictor_max_update  = std::numeric_limits<double>::infinity();
-//     double predictor_small_update = 1e-3;
-
-//     // Newton controls
-//     double newton_tol          = 1e-8;
-//     double newton_max_update   = 1.0;
-//     double newton_max_residual = 5e-3;
-//     size_t newton_iter         = 5;
-
-//     // Relative Newton stopping: dx^2 < newton_rel_tol * ||x||^2
-//     double newton_rel_tol      = 1e-6;
-
-//     // Max outer iterations (default heuristic)
-//     size_t max_iterations = static_cast<size_t>(target_time / step_size) + 5;
-
-//     // Predictor & solver behaviour
-//     bool forth_predictor = true;   // RK4 predictor if true, Euler if false
-//     bool adaptive_flag   = true;   // use LU/QR instead of explicit normal equations
-
-//     bool debug_output    = false;  // Control debugging output
-// };
-
-// -----------------------------------------------------------------------------
-// compute_dx: vector Solution
-// -----------------------------------------------------------------------------
+// Notes: Problem (HC problems) is for polynomial functions and Model (Image struct) is for the parameters to be optimized
+// problem.x is 2D points and problem.x_simulated is 2D points simulated by the initial solution
 
 template<typename Problem, typename Solution, typename Poly, typename Jacobian>
-bool compute_dx(double t, Problem &problem, const Solution &sol, Solution &dx) {
+bool compute_dx(double t, Problem &problem, Solution &sol, Solution &dx) {
 
     Poly polysF, polysG;
     Jacobian JF, JG;
@@ -70,34 +25,7 @@ bool compute_dx(double t, Problem &problem, const Solution &sol, Solution &dx) {
     problem.compute_PolysandJacobian(sol, problem.x, polysF, JF);
     problem.compute_PolysandJacobian(sol, problem.x_simulated, polysG, JG);
 
-    Jacobian Jx = t * JF + (1.0 - t) * JG;
-    Poly t_grad = polysF - polysG;
-
-    if (Jx.rows() == Jx.cols()) {
-        // Use LU decomposition - fastest for square matrices
-        dx = -Jx.lu().solve(t_grad);
-    } else {
-        // Use QR decomposition for non-square matrices
-        dx = -Jx.colPivHouseholderQr().solve(t_grad);
-    }
-
-    return true;
-}
-
-// -----------------------------------------------------------------------------
-// compute_dx: Image + dX
-// -----------------------------------------------------------------------------
-
-template<typename Problem, typename dX, typename Poly, typename Jacobian>
-bool compute_dx(double t, Problem &problem, const Image &sol, dX &dx) {
-
-    Poly polysF, polysG;
-    Jacobian JF, JG;
-
-    problem.compute_PolysandJacobian(sol, problem.x, polysF, JF);
-    problem.compute_PolysandJacobian(sol, problem.x_simulated, polysG, JG);
-
-    Jacobian Jx = t * JF + (1.0 - t) * JG;
+    Jacobian Jx = t * JF + (1 - t) * JG;
     Poly t_grad = polysF - polysG;
 
     if (Jx.rows() == Jx.cols()) {
@@ -107,13 +35,11 @@ bool compute_dx(double t, Problem &problem, const Image &sol, dX &dx) {
         // Use QR decomposition for non-square matrices
         dx = -Jx.colPivHouseholderQr().solve(t_grad);
     }
+    // dx = -(Jx.transpose() * Jx).inverse() * Jx.transpose() * t_grad;
 
     return true;
 }
 
-// -----------------------------------------------------------------------------
-// HC_impl: vector Solution
-// -----------------------------------------------------------------------------
 
 template<typename Problem, typename Solution, typename Poly, typename Jacobian>
 HCStats HC_impl(Problem &problem, const HCOptions &opt, Solution &sol)
@@ -124,11 +50,9 @@ HCStats HC_impl(Problem &problem, const HCOptions &opt, Solution &sol)
         return std::max(opt.min_step_size, std::min(opt.max_step_size, value));
     };
 
-    // Predictor: RK4 or Euler
-    auto predictor = [&](const Solution &base_state, double current_t, double step,
+    auto predictor = [&](Solution base_state, double current_t, double step,
                          Solution &out_state, double &update_norm) -> bool {
         if (opt.forth_predictor) {
-            // RK4 predictor
             Solution k1, k2, k3, k4;
             if (!compute_dx<Problem, Solution, Poly, Jacobian>(current_t, problem, base_state, k1)) {
                 return false;
@@ -153,7 +77,6 @@ HCStats HC_impl(Problem &problem, const HCOptions &opt, Solution &sol)
             out_state = base_state + delta;
             update_norm = delta.norm();
         } else {
-            // Euler predictor
             Solution k1;
             if (!compute_dx<Problem, Solution, Poly, Jacobian>(current_t, problem, base_state, k1)) {
                 return false;
@@ -165,11 +88,9 @@ HCStats HC_impl(Problem &problem, const HCOptions &opt, Solution &sol)
         return std::isfinite(update_norm);
     };
 
-    auto corrector = [&](double current_t, Solution &state,
-                         double &dx_norm, double &residual_norm) -> bool {
+    auto corrector = [&](double current_t, Solution &state, double &dx_norm, double &residual_norm) -> bool {
         dx_norm = 0.0;
         residual_norm = std::numeric_limits<double>::infinity();
-
         for (size_t iter = 0; iter < opt.newton_iter; ++iter) {
             Poly Hpolys;
             Jacobian JH;
@@ -200,8 +121,7 @@ HCStats HC_impl(Problem &problem, const HCOptions &opt, Solution &sol)
                     dx_newton = -JH.colPivHouseholderQr().solve(Hpolys);
                 }
             } else {
-                // Avoid explicit normal equations; still use QR for LSQ
-                dx_newton = -JH.colPivHouseholderQr().solve(Hpolys);
+                dx_newton = -(JH.transpose() * JH).inverse() * JH.transpose() * Hpolys;
             }
 
             dx_norm = dx_newton.norm();
@@ -210,21 +130,11 @@ HCStats HC_impl(Problem &problem, const HCOptions &opt, Solution &sol)
             }
 
             state = state + dx_newton;
-
-            // Absolute step stopping
             if (dx_norm < opt.newton_tol) {
-                return true;
-            }
-
-            // Relative step stopping: ||dx||^2 < newton_rel_tol * ||x||^2
-            double state_norm_sq = state.squaredNorm();
-            if (state_norm_sq > 0.0 &&
-                dx_norm * dx_norm < opt.newton_rel_tol * state_norm_sq) {
                 return true;
             }
         }
 
-        // If we exit the loop, accept if residual is reasonably small
         return residual_norm < opt.newton_max_residual;
     };
 
@@ -233,90 +143,54 @@ HCStats HC_impl(Problem &problem, const HCOptions &opt, Solution &sol)
     double step = clamp_step(opt.step_size);
     const double target_time = opt.target_time;
 
-    bool end_zone = false;
-    size_t consecutive_successes = 0;
-
     while (stats.iterations < opt.max_iterations && t + opt.min_step_size <= target_time) {
-
-        // End-zone logic near target_time
-        double dist_to_target = target_time - t;
-        if (!end_zone && std::abs(dist_to_target) <= (opt.end_zone_width + 1e-7)) {
-            end_zone = true;
-        }
-
-        double max_step;
-        if (end_zone) {
-            max_step = std::abs(dist_to_target);
-        } else {
-            max_step = std::abs(target_time - opt.end_zone_width - t);
-            if (max_step < opt.min_step_size) {
-                max_step = std::abs(dist_to_target);
-            }
-        }
-
-        double trial_step = std::min(step, max_step);
+        double trial_step = std::min(step, target_time - t);
         bool accepted_step = false;
         size_t retries = 0;
 
         while (retries <= opt.max_step_halvings) {
             Solution candidate;
-            double predictor_norm  = 0.0;
+            double predictor_norm = 0.0;
             double correction_norm = 0.0;
-            double residual_norm   = std::numeric_limits<double>::infinity();
+            double residual_norm = std::numeric_limits<double>::infinity();
 
             if (!predictor(sol, t, trial_step, candidate, predictor_norm) ||
                 predictor_norm > opt.predictor_max_update) {
-                // Predictor failed or too large step -> shrink & retry
                 ++stats.rejected_steps;
                 ++retries;
-                consecutive_successes = 0;
-                step = clamp_step(step * opt.step_shrink);
-                trial_step = std::min(step, max_step);
+                step = clamp_step(trial_step * opt.step_shrink);
+                trial_step = std::min(step, target_time - t);
                 continue;
             }
 
             if (!corrector(t + trial_step, candidate, correction_norm, residual_norm)) {
-                // Newton failed -> shrink & retry
                 ++stats.rejected_steps;
                 ++stats.newton_failures;
                 ++retries;
-                consecutive_successes = 0;
-                step = clamp_step(step * opt.step_shrink);
-                trial_step = std::min(step, max_step);
+                step = clamp_step(trial_step * opt.step_shrink);
+                trial_step = std::min(step, target_time - t);
                 continue;
             }
 
             if (correction_norm > opt.newton_max_update) {
-                // Update too large -> shrink & retry
                 ++stats.rejected_steps;
                 ++retries;
-                consecutive_successes = 0;
-                step = clamp_step(step * opt.step_shrink);
-                trial_step = std::min(step, max_step);
+                step = clamp_step(trial_step * opt.step_shrink);
+                trial_step = std::min(step, target_time - t);
                 continue;
             }
 
-            // Accept the step
             sol = candidate;
             t += trial_step;
             ++stats.iterations;
-            stats.final_residual   = residual_norm;
-            stats.final_time       = t;
-            accepted_step          = true;
+            stats.final_residual = residual_norm;
+            stats.final_time = t;
+            accepted_step = true;
 
-            // Success logic for step growth (GPU-style: grow only after several good steps)
-            bool good_predictor = (predictor_norm  < opt.predictor_small_update);
-            bool good_newton    = (correction_norm < opt.newton_tol);
-
-            if (good_predictor && good_newton) {
-                ++consecutive_successes;
-                if (consecutive_successes >= opt.step_grow_after) {
-                    step = clamp_step(step * opt.step_grow);
-                    consecutive_successes = 0;
-                }
-            } else {
-                // Step was accepted but not excellent -> reset counter
-                consecutive_successes = 0;
+            if (predictor_norm < opt.predictor_small_update && correction_norm < opt.newton_tol) {
+                step = clamp_step(step * opt.step_grow);
+            } else if (correction_norm > opt.newton_tol) {
+                step = clamp_step(step * opt.step_shrink);
             }
 
             stats.final_step_size = step;
@@ -325,10 +199,7 @@ HCStats HC_impl(Problem &problem, const HCOptions &opt, Solution &sol)
                 std::cout << "t: " << t
                           << " step: " << trial_step
                           << " predictor_norm: " << predictor_norm
-                          << " correction_norm: " << correction_norm
-                          << " residual_norm: " << residual_norm
-                          << " consecutive_successes: " << consecutive_successes
-                          << std::endl;
+                          << " residual_norm: " << residual_norm << std::endl;
             }
 
             break;
@@ -345,11 +216,37 @@ HCStats HC_impl(Problem &problem, const HCOptions &opt, Solution &sol)
     }
 
     return stats;
+
+};
+
+// updating the Image struct instead of the Solution vector
+
+template<typename Problem, typename dX, typename Poly, typename Jacobian>
+bool compute_dx(double t, Problem &problem, Image &sol, dX &dx) {
+
+    Poly polysF, polysG;
+    Jacobian JF, JG;
+
+
+    problem.compute_PolysandJacobian(sol, problem.x, polysF, JF);
+    problem.compute_PolysandJacobian(sol, problem.x_simulated, polysG, JG);
+
+    Jacobian Jx = t * JF + (1 - t) * JG;
+    Poly t_grad = polysF - polysG;
+
+    if (Jx.rows() == Jx.cols()) {
+        // Use LU decomposition - fastest for square matrices
+        dx = -Jx.lu().solve(t_grad);    
+    } else {
+        // Use QR decomposition for non-square matrices
+        dx = -Jx.colPivHouseholderQr().solve(t_grad);
+    }
+    // dx = -(Jx.transpose() * Jx).inverse() * Jx.transpose() * t_grad;
+
+    return true;
 }
 
-// -----------------------------------------------------------------------------
-// HC_impl_update_Image: Image + dX
-// -----------------------------------------------------------------------------
+
 
 template<typename Problem, typename dX, typename Poly, typename Jacobian>
 HCStats HC_impl_update_Image(Problem &problem, const HCOptions &opt, Image &sol)
@@ -360,8 +257,7 @@ HCStats HC_impl_update_Image(Problem &problem, const HCOptions &opt, Image &sol)
         return std::max(opt.min_step_size, std::min(opt.max_step_size, value));
     };
 
-    // Predictor: RK4 or Euler in tangent space dX, mapped with problem.step
-    auto predictor = [&](const Image &base_state, double current_t, double step,
+    auto predictor = [&](Image base_state, double current_t, double step,
                          Image &out_state, double &update_norm) -> bool {
         if (opt.forth_predictor) {
             dX k1, k2, k3, k4;
@@ -400,11 +296,9 @@ HCStats HC_impl_update_Image(Problem &problem, const HCOptions &opt, Image &sol)
         return std::isfinite(update_norm);
     };
 
-    auto corrector = [&](double current_t, Image &state,
-                         double &dx_norm, double &residual_norm) -> bool {
+    auto corrector = [&](double current_t, Image &state, double &dx_norm, double &residual_norm) -> bool {
         dx_norm = 0.0;
         residual_norm = std::numeric_limits<double>::infinity();
-
         for (size_t iter = 0; iter < opt.newton_iter; ++iter) {
             Poly Hpolys;
             Jacobian JH;
@@ -435,8 +329,7 @@ HCStats HC_impl_update_Image(Problem &problem, const HCOptions &opt, Image &sol)
                     dx_newton = -JH.colPivHouseholderQr().solve(Hpolys);
                 }
             } else {
-                // Avoid explicit normal equations; use QR LSQ instead
-                dx_newton = -JH.colPivHouseholderQr().solve(Hpolys);
+                dx_newton = -(JH.transpose() * JH).inverse() * JH.transpose() * Hpolys;
             }
 
             dx_norm = dx_newton.norm();
@@ -458,43 +351,23 @@ HCStats HC_impl_update_Image(Problem &problem, const HCOptions &opt, Image &sol)
     double step = clamp_step(opt.step_size);
     const double target_time = opt.target_time;
 
-    bool end_zone = false;
-    size_t consecutive_successes = 0;
-
     while (stats.iterations < opt.max_iterations && t + opt.min_step_size <= target_time) {
-
-        double dist_to_target = target_time - t;
-        if (!end_zone && std::abs(dist_to_target) <= (opt.end_zone_width + 1e-7)) {
-            end_zone = true;
-        }
-
-        double max_step;
-        if (end_zone) {
-            max_step = std::abs(dist_to_target);
-        } else {
-            max_step = std::abs(target_time - opt.end_zone_width - t);
-            if (max_step < opt.min_step_size) {
-                max_step = std::abs(dist_to_target);
-            }
-        }
-
-        double trial_step = std::min(step, max_step);
+        double trial_step = std::min(step, target_time - t);
         bool accepted_step = false;
         size_t retries = 0;
 
         while (retries <= opt.max_step_halvings) {
             Image candidate;
-            double predictor_norm  = 0.0;
+            double predictor_norm = 0.0;
             double correction_norm = 0.0;
-            double residual_norm   = std::numeric_limits<double>::infinity();
+            double residual_norm = std::numeric_limits<double>::infinity();
 
             if (!predictor(sol, t, trial_step, candidate, predictor_norm) ||
                 predictor_norm > opt.predictor_max_update) {
                 ++stats.rejected_steps;
                 ++retries;
-                consecutive_successes = 0;
-                step = clamp_step(step * opt.step_shrink);
-                trial_step = std::min(step, max_step);
+                step = clamp_step(trial_step * opt.step_shrink);
+                trial_step = std::min(step, target_time - t);
                 continue;
             }
 
@@ -502,41 +375,30 @@ HCStats HC_impl_update_Image(Problem &problem, const HCOptions &opt, Image &sol)
                 ++stats.rejected_steps;
                 ++stats.newton_failures;
                 ++retries;
-                consecutive_successes = 0;
-                step = clamp_step(step * opt.step_shrink);
-                trial_step = std::min(step, max_step);
+                step = clamp_step(trial_step * opt.step_shrink);
+                trial_step = std::min(step, target_time - t);
                 continue;
             }
 
             if (correction_norm > opt.newton_max_update) {
                 ++stats.rejected_steps;
                 ++retries;
-                consecutive_successes = 0;
-                step = clamp_step(step * opt.step_shrink);
-                trial_step = std::min(step, max_step);
+                step = clamp_step(trial_step * opt.step_shrink);
+                trial_step = std::min(step, target_time - t);
                 continue;
             }
 
-            // Accept step
             sol = candidate;
             t += trial_step;
             ++stats.iterations;
             stats.final_residual = residual_norm;
-            stats.final_time     = t;
-            accepted_step        = true;
+            stats.final_time = t;
+            accepted_step = true;
 
-            // Success logic for step growth
-            bool good_predictor = (predictor_norm  < opt.predictor_small_update);
-            bool good_newton    = (correction_norm < opt.newton_tol);
-
-            if (good_predictor && good_newton) {
-                ++consecutive_successes;
-                if (consecutive_successes >= opt.step_grow_after) {
-                    step = clamp_step(step * opt.step_grow);
-                    consecutive_successes = 0;
-                }
-            } else {
-                consecutive_successes = 0;
+            if (predictor_norm < opt.predictor_small_update && correction_norm < opt.newton_tol) {
+                step = clamp_step(step * opt.step_grow);
+            } else if (correction_norm > opt.newton_tol) {
+                step = clamp_step(step * opt.step_shrink);
             }
 
             stats.final_step_size = step;
@@ -545,10 +407,7 @@ HCStats HC_impl_update_Image(Problem &problem, const HCOptions &opt, Image &sol)
                 std::cout << "t: " << t
                           << " step: " << trial_step
                           << " predictor_norm: " << predictor_norm
-                          << " correction_norm: " << correction_norm
-                          << " residual_norm: " << residual_norm
-                          << " consecutive_successes: " << consecutive_successes
-                          << std::endl;
+                          << " residual_norm: " << residual_norm << std::endl;
             }
 
             break;
@@ -565,8 +424,10 @@ HCStats HC_impl_update_Image(Problem &problem, const HCOptions &opt, Image &sol)
     }
 
     return stats;
+
 };
+
 
 } // namespace poselib
 
-#endif // POSELIB_HOMOTOPY_CONTINUATION_H_
+#endif
