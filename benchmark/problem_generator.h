@@ -117,6 +117,7 @@ struct UnknownFocalFisheyeValidator {
 
     // Checks if the solution is valid (i.e. is rotation matrix and satisfies projection constraints)
     static bool is_valid(const AbsolutePoseProblemInstance &instance, const CameraPose &pose, double focal, double tol);
+    static bool is_valid_inner(const AbsolutePoseProblemInstance &instance, const CameraPose &pose, double focal, double tol);
 };
 
 

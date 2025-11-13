@@ -43,6 +43,7 @@
 
 #include "PoseLib/solvers/p4pfr.h"
 #include "PoseLib/solvers/p4pf_fisheye.h"
+
 #include <iostream>
 
 #include <chrono>
@@ -194,6 +195,8 @@ void FisheyeFocalAbsolutePoseEstimator::generate_models(std::vector<Image> *mode
         p4pfr_hc_depth_fisheye(xs, Xs, &poses, &focals);
     } else if (minimal_solver == Solver::P3P_sampling_LM) {
         p3p_fisheye_lm(xs, Xs, image_size, &poses, &focals);
+    } else if (minimal_solver == Solver::P3P_sampling) {
+        p3p_fisheye(xs, Xs, image_size, &poses, &focals);
     } else if (minimal_solver == Solver::P3P_sampling_HC) {
         p3p_fisheye_hc(xs, Xs, image_size, &poses, &focals);
     } else if (minimal_solver == Solver::P5Pfr) {

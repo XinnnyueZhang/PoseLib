@@ -35,6 +35,9 @@ namespace poselib {
      // sampling p3p still use 4 points (sampling fov looks converge faster than sampling focal particularly for large fov scene)
      int p3p_fisheye_lm(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X, 
                         const double image_size, CameraPoseVector *solutions, std::vector<double> *focals);
+                        
+    int p3p_fisheye(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X, 
+                        const double image_size, CameraPoseVector *solutions, std::vector<double> *focals);
 
      int p3p_fisheye_hc(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X, 
                         const double image_size, CameraPoseVector *solutions, std::vector<double> *focals);

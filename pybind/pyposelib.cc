@@ -46,7 +46,8 @@ py::dict BundleOptions_wrapper(py::dict overwrite) {
 
 std::vector<CameraPose> p3p_wrapper(const std::vector<Eigen::Vector3d> &x, const std::vector<Eigen::Vector3d> &X) {
     std::vector<CameraPose> output;
-    p3p(x, X, &output);
+    // p3p(x, X, &output);
+    p3p_ding(x, X, &output);
     return output;
 }
 
@@ -865,6 +866,72 @@ std::tuple<Camera, Camera, int> focals_from_fundamental_iterative_wrapper(const 
     return focals_from_fundamental_iterative(F, camera1, camera2, max_iters, weights);
 }
 
+std::pair<std::vector<CameraPose>, std::vector<double>> p5pf_newton_wrapper(const std::vector<Eigen::Vector2d> &x,
+    const std::vector<Eigen::Vector3d> &X,
+    bool normalize_input = true) {
+    
+    std::vector<CameraPose> output;
+    std::vector<double> output_focals;
+    p5pf_fisheye(x, X, &output, &output_focals, normalize_input);
+
+    return std::make_pair(output, output_focals);
+}
+
+
+std::pair<std::vector<CameraPose>, std::vector<double>> p5pf_lm_wrapper(const std::vector<Eigen::Vector2d> &x,
+    const std::vector<Eigen::Vector3d> &X) {
+    std::vector<CameraPose> output;
+    std::vector<double> output_focals;
+    p5pf_fisheye_lm(x, X, &output, &output_focals);
+
+    return std::make_pair(output, output_focals);
+}
+
+// TODO: Add python wrapper for p3.5pf-LM, p4pfr-LM, p5pfr-LM, p3p-sampling-LM, p3p-predicted
+std::pair<std::vector<CameraPose>, std::vector<double>> p35pf_lm_wrapper(const std::vector<Eigen::Vector2d> &x,
+    const std::vector<Eigen::Vector3d> &X) {
+    std::vector<CameraPose> output;
+    std::vector<double> output_focals;
+    p35pf_lm_fisheye(x, X, &output, &output_focals);
+    return std::make_pair(output, output_focals);
+}
+std::pair<std::vector<CameraPose>, std::vector<double>> p4pfr_lm_wrapper(const std::vector<Eigen::Vector2d> &x,
+    const std::vector<Eigen::Vector3d> &X) {
+    std::vector<CameraPose> output;
+    std::vector<double> output_focals;
+    p4pfr_lm_fisheye(x, X, &output, &output_focals);
+    return std::make_pair(output, output_focals);
+}
+
+std::pair<std::vector<CameraPose>, std::vector<double>> p5pfr_lm_wrapper(const std::vector<Eigen::Vector2d> &x,
+    const std::vector<Eigen::Vector3d> &X) {
+    std::vector<CameraPose> output;
+    std::vector<double> output_focals;
+    p5pfr_lm_fisheye(x, X, &output, &output_focals);
+    return std::make_pair(output, output_focals);
+}
+std::pair<std::vector<CameraPose>, std::vector<double>> p3p_sampling_lm_wrapper(const std::vector<Eigen::Vector2d> &x,
+        const std::vector<Eigen::Vector3d> &X, const double image_size) {
+    std::vector<CameraPose> output;
+    std::vector<double> output_focals;
+    p3p_fisheye_lm(x, X, image_size, &output, &output_focals);
+    return std::make_pair(output, output_focals);
+}
+std::pair<std::vector<CameraPose>, std::vector<double>> p3p_givenf_wrapper(const std::vector<Eigen::Vector2d> &x,
+    const std::vector<Eigen::Vector3d> &X, double focal_initial) {
+    std::vector<CameraPose> output;
+    std::vector<double> output_focals;
+    p3p_fisheye_givenf(x, X, focal_initial, &output, &output_focals);
+    return std::make_pair(output, output_focals);
+}
+
+std::pair<std::vector<CameraPose>, std::vector<double>> p4pfr_planar_wrapper(const std::vector<Eigen::Vector2d> &x,
+    const std::vector<Eigen::Vector3d> &X) {
+    std::vector<CameraPose> output;
+    std::vector<double> output_focals;
+    oskarsson_arxiv18(x, X, &output, &output_focals);
+    return std::make_pair(output, output_focals);
+}
 } // namespace poselib
 
 PYBIND11_MODULE(poselib, m) {
@@ -1168,6 +1235,15 @@ PYBIND11_MODULE(poselib, m) {
     m.def("RansacOptions", &poselib::RansacOptions_wrapper, py::arg("opt") = py::dict(), "Options for RANSAC.");
     m.def("BundleOptions", &poselib::BundleOptions_wrapper, py::arg("opt") = py::dict(),
           "Options for non-linear refinement.");
+
+    m.def("p5pf_newton", &poselib::p5pf_newton_wrapper, py::arg("points2D"), py::arg("points3D"), py::arg("normalize_input") = true);
+    m.def("p5pf_lm", &poselib::p5pf_lm_wrapper, py::arg("points2D"), py::arg("points3D"));
+    m.def("p35pf_lm", &poselib::p35pf_lm_wrapper, py::arg("points2D"), py::arg("points3D"));
+    m.def("p4pfr_lm", &poselib::p4pfr_lm_wrapper, py::arg("points2D"), py::arg("points3D"));
+    m.def("p5pfr_lm", &poselib::p5pfr_lm_wrapper, py::arg("points2D"), py::arg("points3D"));
+    m.def("p3p_sampling_lm", &poselib::p3p_sampling_lm_wrapper, py::arg("points2D"), py::arg("points3D"),  py::arg("image_size"));
+    m.def("p3p_givenf", &poselib::p3p_givenf_wrapper, py::arg("points2D"), py::arg("points3D"),  py::arg("focal_initial"));
+    m.def("p4pfr_planar", &poselib::p4pfr_planar_wrapper, py::arg("points2D"), py::arg("points3D"));
 
     m.attr("__version__") = std::string(POSELIB_VERSION);
 }

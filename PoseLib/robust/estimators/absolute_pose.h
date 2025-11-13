@@ -115,7 +115,7 @@ class FisheyeFocalAbsolutePoseEstimator {
   public:
     enum Solver { P4Pfr = 0, P4Pfr_LM = 1, P4Pfr_HC_pose = 2, P4Pfr_HC_depth = 3, 
       P3P_sampling_LM = 4, P3P_sampling_HC = 5, P5Pfr = 6, P5Pfr_LM = 7, P3P_givenf = 8, 
-      P5Pf_fisheye = 9, P5Pf_LM = 10, P5Pf = 11, P35Pf = 12, P35Pf_LM = 13};
+      P5Pf_fisheye = 9, P5Pf_LM = 10, P5Pf = 11, P35Pf = 12, P35Pf_LM = 13, P3P_sampling = 14};
 
     FisheyeFocalAbsolutePoseEstimator(const AbsolutePoseOptions &opt, const std::vector<Point2D> &points2D,
                                const std::vector<Point3D> &points3D, Solver solv = Solver::P4Pfr_LM, 

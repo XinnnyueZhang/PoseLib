@@ -132,6 +132,46 @@ struct HCOptions {
     bool debug_output    = false;  // Control debugging output
 };
 
+// struct HCOptions {
+//     // Homotopy is parameterized on t in [0, target_time]
+//     double step_size = 0.05;
+//     double target_time = 1.0;
+//     double min_step_size = 1e-3;
+//     double max_step_size = 0.15;
+
+//     // Heuristic growth/shrink (secondary controller)
+//     double step_grow = 1.5;
+//     double step_shrink = 0.5;
+//     size_t max_step_halvings = 6;
+
+//     // Predictor controls
+//     double predictor_max_update = std::numeric_limits<double>::infinity();
+//     double predictor_small_update = 1e-3;
+
+//     // Newton controls
+//     double newton_tol = 1e-8;
+//     double newton_max_update = 1.0;
+//     double newton_max_residual = 5e-3;
+//     size_t newton_iter = 5;
+
+//     // Max outer iterations (default heuristic)
+//     size_t max_iterations = static_cast<size_t>(target_time / step_size) + 5;
+
+//     // Predictor & solver behaviour
+//     bool forth_predictor = true;   // RK4 predictor
+//     bool adaptive_flag   = true;   // use LU/QR rather than normal equations
+
+//     // RK-based local error control in t
+//     double rk_tol        = 1e-4;   // target local error (state increment)
+//     double rk_safety     = 0.9;    // safety factor
+//     double rk_min_factor = 0.2;    // min multiplicative factor
+//     double rk_max_factor = 5.0;    // max multiplicative factor
+//     bool   use_rk_error_control = true;
+
+//     bool debug_output = false;
+// };
+
+
 // New: add HCStats
 struct HCStats {
     bool success = true;

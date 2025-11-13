@@ -106,6 +106,8 @@ RansacStats ransac_pnpf_fisheye(const std::vector<Point2D> &x, const std::vector
         chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P4Pfr_HC_depth;
     } else if (opt.minimal_solver == "P3P_sampling_LM") {
         chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P3P_sampling_LM;
+    } else if (opt.minimal_solver == "P3P_sampling") {
+        chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P3P_sampling;
     } else if (opt.minimal_solver == "P3P_sampling_HC") {
         chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P3P_sampling_HC;
     } else if (opt.minimal_solver == "P5Pfr") {
