@@ -17,6 +17,9 @@
 #include "PoseLib/camera_pose.h"
 
 namespace poselib {
+    int p4pfr_planar(const std::vector<Eigen::Vector2d> &image_points, const std::vector<Eigen::Vector3d> &world_points, 
+		std::vector<CameraPose> *output_poses, std::vector<double> *output_focals);
+        
 	int oskarsson_arxiv18(const std::vector<Eigen::Vector2d> &points2d, const std::vector<Eigen::Vector3d> &points3d, 
 		std::vector<CameraPose> *output_poses, std::vector<double> *output_focals);
 };

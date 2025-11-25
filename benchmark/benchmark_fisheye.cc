@@ -386,7 +386,7 @@ int main(int argc, char** argv) {
 
     // p5pf_TaylorExpansion
     results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P5PF_TaylorExpansion>(1e4, fisheye_5pts_opt, tol*1e4));
-
+    results.push_back(poselib::benchmark_w_extra_save_result<poselib::SolverFisheye_P5PF_TaylorExpansion_LM>(1e4, fisheye_5pts_opt, tol*1e4));
     display_result(results);
 
     // write result to file

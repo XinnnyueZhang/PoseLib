@@ -53,6 +53,9 @@ namespace poselib {
      int p3p_fisheye_givenf(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X, double focal_initial,
                      CameraPoseVector *solutions, std::vector<double> *focals);
 
+     int p3p_fisheye_givenf_lm(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X, double focal_initial,
+                     CameraPoseVector *solutions, std::vector<double> *focals);
+
      int p35pf_fisheye(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X,
                         CameraPoseVector *solutions, std::vector<double> *focals);
      
@@ -60,6 +63,12 @@ namespace poselib {
                     CameraPoseVector *solutions, std::vector<double> *focals);
 
      int p5pf_orgin_fisheye(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X,
+                        CameraPoseVector *solutions, std::vector<double> *focals);
+
+     int p4pfr_planar_fisheye(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X,
+                        CameraPoseVector *solutions, std::vector<double> *focals);
+
+     int p4pfr_planar_lm_fisheye(const std::vector<Eigen::Vector2d> &x, const std::vector<Eigen::Vector3d> &X,
                         CameraPoseVector *solutions, std::vector<double> *focals);
 
 }

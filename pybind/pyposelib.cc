@@ -925,11 +925,51 @@ std::pair<std::vector<CameraPose>, std::vector<double>> p3p_givenf_wrapper(const
     return std::make_pair(output, output_focals);
 }
 
+std::pair<std::vector<CameraPose>, std::vector<double>> p3p_givenf_lm_wrapper(const std::vector<Eigen::Vector2d> &x,
+    const std::vector<Eigen::Vector3d> &X, double focal_initial) {
+    std::vector<CameraPose> output;
+    std::vector<double> output_focals;
+    p3p_fisheye_givenf_lm(x, X, focal_initial, &output, &output_focals);
+    return std::make_pair(output, output_focals);
+}
+
 std::pair<std::vector<CameraPose>, std::vector<double>> p4pfr_planar_wrapper(const std::vector<Eigen::Vector2d> &x,
     const std::vector<Eigen::Vector3d> &X) {
     std::vector<CameraPose> output;
     std::vector<double> output_focals;
     oskarsson_arxiv18(x, X, &output, &output_focals);
+    return std::make_pair(output, output_focals);
+}
+
+std::pair<std::vector<CameraPose>, std::vector<double>> p5pfl_wrapper(const std::vector<Eigen::Vector2d> &x,
+    const std::vector<Eigen::Vector3d> &X, double focal_initial) {
+    std::vector<CameraPose> output;
+    std::vector<double> output_focals;
+    p5pf_fisheye2(x, X, &output, &output_focals, focal_initial);
+    return std::make_pair(output, output_focals);
+}
+
+std::pair<std::vector<CameraPose>, std::vector<double>> p5pfl_valid_wrapper(const std::vector<Eigen::Vector2d> &x,
+    const std::vector<Eigen::Vector3d> &X, double focal_initial) {
+    std::vector<CameraPose> output;
+    std::vector<double> output_focals;
+    p5pf_fisheye2_valid(x, X, &output, &output_focals, focal_initial);
+    return std::make_pair(output, output_focals);
+}
+
+std::pair<std::vector<CameraPose>, std::vector<double>> p5pfl_lm_wrapper(const std::vector<Eigen::Vector2d> &x,
+    const std::vector<Eigen::Vector3d> &X, double focal_initial) {
+    std::vector<CameraPose> output;
+    std::vector<double> output_focals;
+    p5pf_fisheye2_noValid_lm(x, X, &output, &output_focals, focal_initial);
+    return std::make_pair(output, output_focals);
+}
+
+std::pair<std::vector<CameraPose>, std::vector<double>> p5pfl_Valid_lm_wrapper(const std::vector<Eigen::Vector2d> &x,
+    const std::vector<Eigen::Vector3d> &X, double focal_initial) {
+    std::vector<CameraPose> output;
+    std::vector<double> output_focals;
+    p5pf_fisheye2_lm(x, X, &output, &output_focals, focal_initial);
     return std::make_pair(output, output_focals);
 }
 } // namespace poselib
@@ -1243,7 +1283,12 @@ PYBIND11_MODULE(poselib, m) {
     m.def("p5pfr_lm", &poselib::p5pfr_lm_wrapper, py::arg("points2D"), py::arg("points3D"));
     m.def("p3p_sampling_lm", &poselib::p3p_sampling_lm_wrapper, py::arg("points2D"), py::arg("points3D"),  py::arg("image_size"));
     m.def("p3p_givenf", &poselib::p3p_givenf_wrapper, py::arg("points2D"), py::arg("points3D"),  py::arg("focal_initial"));
+    m.def("p3p_givenf_lm", &poselib::p3p_givenf_lm_wrapper, py::arg("points2D"), py::arg("points3D"),  py::arg("focal_initial"));
     m.def("p4pfr_planar", &poselib::p4pfr_planar_wrapper, py::arg("points2D"), py::arg("points3D"));
-
+    
+    m.def("p5pfl", &poselib::p5pfl_wrapper, py::arg("points2D"), py::arg("points3D"), py::arg("focal_initial"));
+    m.def("p5pfl_valid", &poselib::p5pfl_valid_wrapper, py::arg("points2D"), py::arg("points3D"), py::arg("focal_initial"));
+    m.def("p5pfl_lm", &poselib::p5pfl_lm_wrapper, py::arg("points2D"), py::arg("points3D"), py::arg("focal_initial"));
+    m.def("p5pfl_Valid_lm", &poselib::p5pfl_Valid_lm_wrapper, py::arg("points2D"), py::arg("points3D"), py::arg("focal_initial"));
     m.attr("__version__") = std::string(POSELIB_VERSION);
 }

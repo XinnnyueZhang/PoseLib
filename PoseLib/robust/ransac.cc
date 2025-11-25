@@ -37,6 +37,7 @@
 #include "PoseLib/solvers/gen_relpose_5p1pt.h"
 #include "PoseLib/solvers/p3p.h"
 #include "PoseLib/solvers/relpose_5pt.h"
+#include "PoseLib/solvers/p4pfr_planar.h"
 #include "ransac_impl.h"
 
 #include <chrono>
@@ -98,8 +99,12 @@ RansacStats ransac_pnpf_fisheye(const std::vector<Point2D> &x, const std::vector
     FisheyeFocalAbsolutePoseEstimator::Solver chosen_solver;
     if (opt.minimal_solver == "P4Pfr") {
         chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P4Pfr;
+    } else if (opt.minimal_solver == "P4Pfr_planar") {
+        chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P4Pfr_planar;
     } else if (opt.minimal_solver == "P4Pfr_LM") {
         chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P4Pfr_LM;
+    } else if (opt.minimal_solver == "P4Pfr_planar_LM") {
+        chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P4Pfr_planar_LM;
     } else if (opt.minimal_solver == "P4Pfr_HC_pose") {
         chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P4Pfr_HC_pose;
     } else if (opt.minimal_solver == "P4Pfr_HC_depth") {
@@ -126,6 +131,10 @@ RansacStats ransac_pnpf_fisheye(const std::vector<Point2D> &x, const std::vector
         chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P35Pf;
     } else if (opt.minimal_solver == "P35Pf_LM") {
         chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P35Pf_LM;
+    } else if (opt.minimal_solver == "P5Pf_TaylorExpansion") {
+        chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P5Pf_TaylorExpansion;
+    } else if (opt.minimal_solver == "P5Pf_TaylorExpansion_LM") {
+        chosen_solver = FisheyeFocalAbsolutePoseEstimator::Solver::P5Pf_TaylorExpansion_LM;
     } else {
         std::cout << "Invalid minimal solver: " << opt.minimal_solver << std::endl;
         return RansacStats(); // Exit if solver is invalid

@@ -59,7 +59,7 @@ set(SOURCES
     robust/optim/lm_impl.cc
     HCsolvers/HCproblems/helper.cc
     robust/recalibrator.cc
-    solvers/oskarsson_arxiv18.cc
+    solvers/p4pfr_planar.cc
 )
 
 # Set HEADERS_PUBLIC variable
@@ -128,7 +128,7 @@ set(HEADERS_PUBLIC
     HCsolvers/HCproblems/absolute_fisheye.h
     HCsolvers/HCproblems/helper.h
     robust/recalibrator.h
-    solvers/oskarsson_arxiv18.h
+    solvers/p4pfr_planar.h
 )
 
 # Set HEADERS_PRIVATE variable

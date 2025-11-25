@@ -49,7 +49,16 @@ int p5pf_fisheye_lm(const std::vector<Eigen::Vector2d> &points2d, const std::vec
 
 int p5pf_fisheye2(const std::vector<Eigen::Vector2d> &points2d, const std::vector<Eigen::Vector3d> &points3d,
     std::vector<CameraPose> *output_poses, std::vector<double> *output_focals, double f_inital);
-   
+    
+int p5pf_fisheye2_valid(const std::vector<Eigen::Vector2d> &points2d, const std::vector<Eigen::Vector3d> &points3d,
+    std::vector<CameraPose> *output_poses, std::vector<double> *output_focals, double f_inital);
+
+int p5pf_fisheye2_lm(const std::vector<Eigen::Vector2d> &points2d, const std::vector<Eigen::Vector3d> &points3d,
+    std::vector<CameraPose> *output_poses, std::vector<double> *output_focals, double f_inital);
+
+int p5pf_fisheye2_noValid_lm(const std::vector<Eigen::Vector2d> &points2d, const std::vector<Eigen::Vector3d> &points3d,
+    std::vector<CameraPose> *output_poses, std::vector<double> *output_focals, double f_inital);
+
 } // namespace poselib
 
 #endif

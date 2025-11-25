@@ -1327,7 +1327,7 @@ struct SolverFisheye_P3P_fov_LM {
         std::vector<double> fov_list = {100, 110, 120, 130, 140, 150, 160, 170, 180, 200, 210, 220};
         for (double fov : fov_list) {
             // double focal = instance.focal_gt * std::tan(instance.camera_fov_ / 2.0 * kPI / 180.0) / std::tan(fov / 2.0 * kPI / 180.0);
-            double image_size = instance.focal_gt * std::tan(instance.camera_fov_ / 2.0 * kPI / 180.0);
+            double image_size = instance.focal_gt * instance.camera_fov_ * kPI / 180.0;
             double focal = image_size / (fov * M_PI / 180.0);
 
             Camera camera;
@@ -1752,7 +1752,9 @@ struct SolverFisheye_P5PF_TaylorExpansion {
             p2d[i] = instance.x_point_fisheye_[i].hnormalized();
         }
 
-        double f_inital = instance.focal_gt-1;
+        // double f_inital = instance.focal_gt-10;
+        double fov_initial = 140;
+        double f_inital = instance.focal_gt * std::tan(instance.camera_fov_ / 2.0 * kPI / 180.0) / std::tan(fov_initial / 2.0 * kPI / 180.0);
 
         int nSols_p5pf = p5pf_fisheye2(p2d, instance.X_point_, solutions, focals, f_inital);
 
@@ -1760,6 +1762,27 @@ struct SolverFisheye_P5PF_TaylorExpansion {
     }
     typedef UnknownFocalFisheyeValidator validator;
     static std::string name() { return "fisheye_p5pf_TaylorExpansion"; }
+};
+
+struct SolverFisheye_P5PF_TaylorExpansion_LM {
+    static inline int solve(const AbsolutePoseProblemInstance &instance, poselib::CameraPoseVector *solutions,
+        std::vector<double> *focals) {
+        // dehomogenize input
+        std::vector<Eigen::Vector2d> p2d(5);
+        for (int i = 0; i < 5; ++i) {
+            p2d[i] = instance.x_point_fisheye_[i].hnormalized();
+        }
+
+        // double f_inital = instance.focal_gt-10;
+        double fov_initial = 140;
+        double f_inital = instance.focal_gt * std::tan(instance.camera_fov_ / 2.0 * kPI / 180.0) / std::tan(fov_initial / 2.0 * kPI / 180.0);
+
+        int nSols_p5pf = p5pf_fisheye2_lm(p2d, instance.X_point_, solutions, focals, f_inital);
+
+        return nSols_p5pf;
+    }
+    typedef UnknownFocalFisheyeValidator validator;
+    static std::string name() { return "fisheye_p5pf_TaylorExpansion_LM"; }
 };
 
 } // namespace poselib

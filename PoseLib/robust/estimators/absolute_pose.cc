@@ -43,7 +43,7 @@
 
 #include "PoseLib/solvers/p4pfr.h"
 #include "PoseLib/solvers/p4pf_fisheye.h"
-
+#include "PoseLib/solvers/p4pfr_planar.h"
 #include <iostream>
 
 #include <chrono>
@@ -187,6 +187,10 @@ void FisheyeFocalAbsolutePoseEstimator::generate_models(std::vector<Image> *mode
 
     if (minimal_solver == Solver::P4Pfr) {
         p4pfr_fisheye(xs, Xs, &poses, &focals);
+    } else if (minimal_solver == Solver::P4Pfr_planar) {
+        p4pfr_planar_fisheye(xs, Xs, &poses, &focals);
+    } else if (minimal_solver == Solver::P4Pfr_planar_LM) {
+        p4pfr_planar_lm_fisheye(xs, Xs, &poses, &focals);
     } else if (minimal_solver == Solver::P4Pfr_LM) {
         p4pfr_lm_fisheye(xs, Xs, &poses, &focals);
     } else if (minimal_solver == Solver::P4Pfr_HC_pose) {
@@ -215,6 +219,12 @@ void FisheyeFocalAbsolutePoseEstimator::generate_models(std::vector<Image> *mode
         p5pf_orgin_fisheye(xs, Xs, &poses, &focals);
     } else if (minimal_solver == Solver::P5Pf_LM) {
         p5pf_fisheye_lm(xs, Xs, &poses, &focals);
+    } else if (minimal_solver == Solver::P5Pf_TaylorExpansion) {
+        double f0 = image_size / (140 * M_PI / 180.0);
+        p5pf_fisheye2_valid(xs, Xs, &poses, &focals, f0);
+    } else if (minimal_solver == Solver::P5Pf_TaylorExpansion_LM) {
+        double f0 = image_size / (140 * M_PI / 180.0);
+        p5pf_fisheye2_lm(xs, Xs, &poses, &focals, f0);
     } else { 
         // output error
         std::cerr << "FisheyeFocalAbsolutePoseEstimator: Unsupported solver" << std::endl;

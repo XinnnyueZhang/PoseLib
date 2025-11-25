@@ -1,10 +1,47 @@
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 #include <complex>
-#include "oskarsson_arxiv18.h"
+#include "p4pfr_planar.h"
 
 using namespace Eigen;
 using std::complex;
+
+int poselib::p4pfr_planar(const std::vector<Eigen::Vector2d> &image_points, const std::vector<Eigen::Vector3d> &world_points, 
+	std::vector<CameraPose> *output_poses, std::vector<double> *output_focals)
+{
+	// Transform such that make X(3,:) = 0
+	Matrix<double, 3, 4> X;
+	X.resize(3, 4);
+	for (int i = 0; i < 4; i++) {
+		X(0, i) = world_points[i](0);
+		X(1, i) = world_points[i](1);
+		X(2, i) = world_points[i](2);
+	}
+	Vector3d t0 = X.rowwise().mean();
+	X.colwise() -= t0;
+
+	JacobiSVD<Matrix<double, 3, Dynamic>> svd(X, ComputeThinU);
+	Matrix<double, 3, 3> R0 = svd.matrixU();
+	if (R0.determinant() < 0)
+		R0 *= -1.0;
+	X = R0.transpose() * X;
+	
+	std::vector<Eigen::Vector3d> world_points_transformed;
+	for (int i = 0; i < 4; i++) {
+		world_points_transformed.emplace_back(X.col(i));
+	}
+
+	std::vector<CameraPose> poses_oskarsson;
+	int nSols = oskarsson_arxiv18(image_points, world_points_transformed, &poses_oskarsson, output_focals);
+	for (int i = 0; i < nSols; i++) {
+		Matrix<double, 3, 3> R_est = poses_oskarsson[i].R() * R0.transpose();
+		Vector3d t_est = poses_oskarsson[i].t - R_est * t0;
+		CameraPose pose_est(R_est, t_est);
+		output_poses->emplace_back(pose_est);
+	}
+	return output_poses->size();
+}
+
 
 int poselib::oskarsson_arxiv18(const std::vector<Eigen::Vector2d> &image_points, const std::vector<Eigen::Vector3d> &world_points, 
 	std::vector<CameraPose> *output_poses, std::vector<double> *output_focals)

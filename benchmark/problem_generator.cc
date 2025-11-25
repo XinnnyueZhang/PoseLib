@@ -238,7 +238,7 @@ bool UnknownFocalRadialValidator::is_valid(const AbsolutePoseProblemInstance &in
 double UnknownFocalFisheyeValidator::compute_pose_error(const AbsolutePoseProblemInstance &instance, const CameraPose &pose,
                                                  double focal) {
 
-    return (instance.pose_gt.R() - pose.R()).norm() + (instance.pose_gt.t - pose.t).norm() +
+    return (instance.pose_gt.R() - pose.R()).norm() + (instance.pose_gt.t - pose.t).norm()/instance.pose_gt.t.norm() +
            std::abs(instance.focal_gt - focal)/std::abs(instance.focal_gt);
 }
 
@@ -365,7 +365,8 @@ void generate_abspose_problems(int n_problems, std::vector<AbsolutePoseProblemIn
     problem_instances->clear();
     problem_instances->reserve(n_problems);
 
-    double fov_scale = std::tan(options.camera_fov_ / 2.0 * kPI / 180.0);
+    // double fov_scale = std::tan(options.camera_fov_ / 2.0 * kPI / 180.0);
+    double fov_scale = options.camera_fov_ * kPI / 180.0/2;
 
     // Random generators
     std::default_random_engine random_engine;
